@@ -32,7 +32,6 @@ public class OrderController {
     }
 
     @PostMapping
-    //@PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<OrderResponse> createOrder(@Valid @RequestBody CreateOrderRequest request, Authentication authentication) {
         String authUserId = authentication.getName();
         if (!authUserId.equals(request.getUserId())) {
