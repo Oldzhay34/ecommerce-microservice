@@ -1,0 +1,7 @@
+target/
+build/
+*.jar
+.idea/
+.vscode/
+.env
+.env.example

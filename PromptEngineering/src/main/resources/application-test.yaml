@@ -1,0 +1,55 @@
+# src/test/resources/application-test.yml
+# @ActiveProfiles("test") ile devreye girer. Amac: context'i dis sistemlere BAGLANMADAN ayaga kaldirmak.
+
+spring:
+  # Docker Compose entegrasyonu testte kapali (test broker/DB ayaga kaldirmasin)
+  docker:
+    compose:
+      enabled: false
+
+  # H2 in-memory - PostgreSQL yerine
+  datasource:
+    url: jdbc:h2:mem:authtestdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+    show-sql: false
+
+  # Scheduled is (OutboxEventPublisher @Scheduled) test sirasinda tetiklenmesin
+  task:
+    scheduling:
+      enabled: false
+
+  # RabbitMQ / Redis baglanti bilgileri (mock'landiklari icin gercek deger onemsiz,
+  # ama auto-config properties bind ederken hata vermesin diye dummy veriyoruz)
+  rabbitmq:
+    host: localhost
+    port: 5672
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  # NOT: "spring.autoconfigure.exclude" ILE STRING TABANLI EXCLUDE KULLANMIYORUZ.
+  #   Sebep: Spring Boot 4 modularizasyonunda auto-config siniflarinin classpath'te
+  #   fiziksel bulunmadigi durumda YAML string exclude "Cannot resolve" hatasi verir.
+  #   Cozum: RabbitTemplate, StringRedisTemplate ve RedisConnectionFactory
+  #   PromptEngineeringApplicationTests icinde @MockitoBean ile saglanir.
+  #   Mock bean context'te oldugu icin auto-config gercek broker/Redis'e BAGLANMAYA CALISMAZ.
+
+# Kodun @Value ile okudugu guvenlik anahtarlari (test degerleri)
+app:
+  security:
+    # HMAC-SHA256 icin >= 32 byte
+    jwt-secret: "test-super-secret-key-that-is-very-long-for-hmac-sha256-256bit"
+    # AES-256 icin TAM 32 byte
+    aes-secret: "12345678901234567890123456789012"
+
+logging:
+  level:
+    root: WARN
+    com.promptengineering: INFO

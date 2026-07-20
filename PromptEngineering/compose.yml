@@ -1,0 +1,70 @@
+services:
+  auth-service:
+    build: .
+    ports:
+      - "8085:8082"
+    env_file:
+      - .env
+    environment:
+      - APP_SECURITY_JWT_SECRET=${JWT_SECRET_KEY}
+      - AES_SECRET_KEY=${AES_SECRET_KEY}
+      - SPRING_PROFILES_ACTIVE=docker
+      - SPRING_DOCKER_COMPOSE_ENABLED=false
+
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-auth:5432/authdb
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_DATASOURCE_DRIVER_CLASS_NAME=org.postgresql.Driver
+      - SPRING_JPA_DATABASE_PLATFORM=org.hibernate.dialect.PostgreSQLDialect
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=update
+      - LOGGING_LEVEL_ROOT=INFO
+      - LOGGING_LEVEL_COM_PROMPTENGINEERING=DEBUG
+
+      - SPRING_RABBITMQ_HOST=ecommerce-rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USER}
+      - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+
+      - SPRING_DATA_REDIS_HOST=ecommerce-redis
+      - SPRING_DATA_REDIS_PORT=6379
+      - SPRING_DATA_REDIS_DATABASE=0
+
+      - DB_HOST=postgres-auth
+      - DB_PORT=5432
+      - DB_NAME=authdb
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - REDIS_HOST=ecommerce-redis
+      - RABBITMQ_HOST=ecommerce-rabbitmq
+      - RABBITMQ_PORT=5672
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+    networks:
+      - ecommerce-shared-network
+
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: postgres_auth
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5438:5432"
+    volumes:
+      - pg-auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d authdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-shared-network
+
+volumes:
+  pg-auth-data:
+
+networks:
+  ecommerce-shared-network:
+    external: true
