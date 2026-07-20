@@ -2,8 +2,12 @@ server:
   port: 8084
 
 spring:
+
   application:
     name: order-service
+
+  main:
+    allow-bean-definition-overriding: true
 
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:orderdb}
