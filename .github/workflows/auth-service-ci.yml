@@ -4,12 +4,13 @@ on:
   push:
     branches: [ "main", "master" ]
     paths:
-      - 'auth-service/**'
+      # Sadece PromptEngineering klasörü veya bu workflow değiştiğinde tetiklenir
+      - 'PromptEngineering/**'
       - '.github/workflows/auth-service-ci.yml'
   pull_request:
     branches: [ "main", "master" ]
     paths:
-      - 'auth-service/**'
+      - 'PromptEngineering/**'
       - '.github/workflows/auth-service-ci.yml'
 
 jobs:
@@ -29,6 +30,6 @@ jobs:
           cache: maven
 
       - name: Spring Boot Testlerini Çalıştır
-        # working-directory parametresini doğrudan adımın altına aldık
-        working-directory: auth-service
+        # Doğru klasör ismi verildi: PromptEngineering
+        working-directory: PromptEngineering
         run: mvn test -Dspring.profiles.active=test
