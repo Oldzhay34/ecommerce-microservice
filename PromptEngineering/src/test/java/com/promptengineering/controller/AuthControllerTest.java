@@ -8,16 +8,14 @@ import com.promptengineering.auth.api.dto.VerifyOtpRequest;
 import com.promptengineering.auth.api.exception.GlobalExceptionHandler;
 import com.promptengineering.auth.api.exception.UnauthorizedException;
 import com.promptengineering.auth.application.port.in.AuthUseCase;
-import com.promptengineering.auth.infrastructure.security.provider.JwtTokenProvider; // <-- YENI EKLENEN IMPORT
+import com.promptengineering.auth.infrastructure.security.provider.JwtTokenProvider;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-// Spring Boot 4.x: @WebMvcTest ve @AutoConfigureMockMvc YENI paket -> org.springframework.boot.webmvc.test.autoconfigure
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-// Spring Boot 4.x: @MockBean KALDIRILDI -> @MockitoBean (spring-test)
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -29,15 +27,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * DEGISIKLIK (Spring Boot 4.x):
- *  1. @WebMvcTest / @AutoConfigureMockMvc import paketi:
- *       ESKI: org.springframework.boot.test.autoconfigure.web.servlet.*
- *       YENI: org.springframework.boot.webmvc.test.autoconfigure.*
- *     Bu siniflar spring-boot-starter-webmvc-test icinde gelir (pom.xml'de ZATEN var).
- *  2. @MockBean KALDIRILDI -> @MockitoBean
- *       (org.springframework.test.context.bean.override.mockito.MockitoBean)
- */
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
 @Import(GlobalExceptionHandler.class)
@@ -47,9 +36,8 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
-    @Autowired
-    private ObjectMapper objectMapper;
+    // ÇÖZÜM UYGULANDI: Spring'den beklemek yerine nesneyi doğrudan oluşturuyoruz.
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @MockitoBean
     private AuthUseCase authUseCase;
