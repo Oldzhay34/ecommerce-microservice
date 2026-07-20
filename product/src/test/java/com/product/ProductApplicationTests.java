@@ -11,7 +11,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-@SpringBootTest
+@SpringBootTest(properties = "spring.main.allow-bean-definition-overriding=true") // Bu satırı ekle
 @ActiveProfiles("test")
 @DisplayName("Smoke Test - Context Yükleme")
 class ProductApplicationTests {
