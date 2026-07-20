@@ -1,5 +1,6 @@
 package com.promptengineering;
 
+import com.promptengineering.auth.infrastructure.security.provider.JwtTokenProvider; // <-- YENİ EKLENEN IMPORT
 import org.junit.jupiter.api.Test;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -45,6 +46,10 @@ class PromptEngineeringApplicationTests {
 
     @MockitoBean
     private RedisConnectionFactory redisConnectionFactory;
+
+    // JWT Security Context'inin ayağa kalkarken patlamaması için eklendi
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     void contextLoads() {
