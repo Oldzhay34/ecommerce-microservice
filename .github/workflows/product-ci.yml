@@ -3,9 +3,9 @@ name: Product Service CI
 on:
   push:
     branches: [ "main" ]
-    # Sadece product klasöründe değişiklik olursa bu pipeline çalışır
     paths:
-      - 'product/**' 
+      - 'product/**'
+      - '.github/workflows/product-ci.yml'
   pull_request:
     branches: [ "main" ]
     paths:
