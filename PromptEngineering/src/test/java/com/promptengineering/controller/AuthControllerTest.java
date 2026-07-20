@@ -8,6 +8,7 @@ import com.promptengineering.auth.api.dto.VerifyOtpRequest;
 import com.promptengineering.auth.api.exception.GlobalExceptionHandler;
 import com.promptengineering.auth.api.exception.UnauthorizedException;
 import com.promptengineering.auth.application.port.in.AuthUseCase;
+import com.promptengineering.auth.infrastructure.security.provider.JwtTokenProvider; // <-- YENI EKLENEN IMPORT
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,11 +47,16 @@ class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
     private ObjectMapper objectMapper;
 
     @MockitoBean
     private AuthUseCase authUseCase;
+
+    // JWT Filter'in calisabilmesi (context'in patlamamasi) icin eklenen mock
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     @Test
     @DisplayName("B1: register - gecerli body ile 201 ve mesaj doner")
