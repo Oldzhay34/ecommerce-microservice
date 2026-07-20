@@ -4,7 +4,6 @@ on:
   push:
     branches: [ "main", "master" ]
     paths:
-      # Sadece auth-service klasörü içindeki kodlar veya bu workflow dosyası değiştiğinde tetiklenir
       - 'auth-service/**'
       - '.github/workflows/auth-service-ci.yml'
   pull_request:
@@ -18,11 +17,6 @@ jobs:
     name: Run Unit & Integration Tests
     runs-on: ubuntu-latest
 
-    # Monorepo yapısı olduğu için komutların doğrudan auth-service klasörü içinde çalışmasını sağlar
-    defaults:
-      run:
-        working-directory: ./auth-service
-
     steps:
       - name: Kodu GitHub'dan Çek
         uses: actions/checkout@v4
@@ -30,13 +24,11 @@ jobs:
       - name: Java JDK Kurulumu
         uses: actions/setup-java@v4
         with:
-          java-version: '21' # Kullandığın Java sürümüne göre (örn: 17 veya 21) ayarlayabilirsin
+          java-version: '21'
           distribution: 'temurin'
-          cache: maven # Bağımlılıkları cache'leyerek sonraki build'leri hızlandırır
-
-      - name: Maven Wrapper İzinlerini Düzenle
-        run: chmod +x mvnw || true
+          cache: maven
 
       - name: Spring Boot Testlerini Çalıştır
-        # activeProfile "test" ile test klasöründeki application-test.yml devreye girer
-        run: ./mvnw test -Dspring.profiles.active=test
+        # working-directory parametresini doğrudan adımın altına aldık
+        working-directory: auth-service
+        run: mvn test -Dspring.profiles.active=test
