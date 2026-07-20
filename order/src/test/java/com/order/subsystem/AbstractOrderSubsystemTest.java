@@ -22,6 +22,14 @@ import org.testcontainers.utility.DockerImageName;
  * altyapısıyla (DB + Rabbit + ES) tutarlı çalıştığını kanıtlıyoruz.
  * Stok onay/red event'leri gerektiğinde testin kendisi tarafından
  * simüle edilir (bkz. OrderCreationSubsystemTest).
+ *
+ * ELASTICSEARCH VERSİYON NOTU: Spring Boot 4.1 / Spring Data Elasticsearch
+ * 6.x, Elasticsearch 9.x istemci kütüphanelerini kullanıyor ve isteklere
+ * "compatible-with=9" header'ı ekliyor. Elasticsearch 8.x sunucuları bu
+ * header'ı anlamadığı için 400 (boş body) hatasıyla context başlatma
+ * başarısız oluyordu ("Expecting a response body, but none was sent").
+ * Bu yüzden container image'ı 9.x'e yükseltildi - client ile server
+ * major versiyonu eşleşmeli.
  */
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -38,7 +46,7 @@ public abstract class AbstractOrderSubsystemTest {
 
     @Container
     static final ElasticsearchContainer ELASTICSEARCH =
-            new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.15.0"))
+            new ElasticsearchContainer(DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.0.2"))
                     .withEnv("xpack.security.enabled", "false")
                     .withEnv("discovery.type", "single-node");
 
