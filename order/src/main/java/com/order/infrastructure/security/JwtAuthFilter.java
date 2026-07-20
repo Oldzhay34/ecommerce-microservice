@@ -23,6 +23,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String userIdHeader = request.getHeader("X-User-Id");
         String roleHeader = request.getHeader("X-User-Role");
 
+        System.out.println("JWT FILTER → userId=" + userIdHeader + " role=" + roleHeader);
+
         if (userIdHeader != null && roleHeader != null) {
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     userIdHeader,
