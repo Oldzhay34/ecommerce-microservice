@@ -29,7 +29,7 @@ class ProductApplicationTests {
 
     // Gerçek Elasticsearch'e bağlanmasını engeller
     @MockitoBean
-    private ElasticsearchTemplate elasticsearchTemplate;
+    private com.product.infrastructure.search.repository.ProductSearchRepository productSearchRepository;
 
     // Security context'in patlamasını engeller
     @MockitoBean
