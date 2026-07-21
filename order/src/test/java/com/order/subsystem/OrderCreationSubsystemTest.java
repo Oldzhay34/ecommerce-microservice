@@ -3,6 +3,7 @@ package com.order.subsystem;
 import com.order.api.dto.CreateOrderRequest;
 import com.order.api.dto.OrderItemDto;
 import com.order.domain.model.OrderStatus;
+import com.order.infrastructure.messaging.publisher.OutboxEventPublisher;
 import com.order.infrastructure.persistence.entity.OrderJpaEntity;
 import com.order.infrastructure.persistence.entity.OutboxEventJpaEntity;
 import com.order.infrastructure.persistence.repository.OrderRepository;
@@ -35,16 +36,6 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
-/**
- * Subsystem test: sadece order servisi + gerçek Postgres + gerçek RabbitMQ.
- * Product servisi burada yok - amaç order servisinin KENDİ İÇİNDE tutarlı
- * çalıştığını (yazma -> outbox -> yayınlama zinciri) doğrulamak.
- *
- * GET endpoint'leri burada test edilMİYOR çünkü query tarafı (OrderSearchAdapter)
- * Elasticsearch'ten okuyor ve şu an Postgres->ES senkronizasyonu yapan bir
- * mekanizma yok (bkz. sohbet notu). Bu yüzden Postgres durumunu doğrudan
- * OrderRepository (JPA) üzerinden doğruluyoruz.
- */
 @DisplayName("Order Service - Subsystem Tests (Postgres + RabbitMQ, gerçek altyapı)")
 @AutoConfigureTestRestTemplate
 class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
@@ -69,14 +60,12 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
     @Autowired
     private AmqpAdmin amqpAdmin;
 
+    // Scheduler test'te kapalı; publisher'ı elle tetiklemek için inject ediyoruz.
+    @Autowired
+    private OutboxEventPublisher outboxEventPublisher;
+
     @BeforeEach
     void bindVerificationQueue() {
-        // Test amaçlı bağımsız bir queue - order.exchange'e "order.created"
-        // routing key'iyle bind ediyoruz ki publisher'ın gerçekten doğru
-        // exchange/routing key'e mesaj bastığını dışarıdan bir tüketici
-        // gibi doğrulayabilelim (uygulamanın kendi StockResponseListener'ından
-        // BAĞIMSIZ bir doğrulama - o "stock.event.*" dinliyor, bu ise
-        // "order.created" dinliyor).
         Queue queue = QueueBuilder.durable(TEST_VERIFICATION_QUEUE).build();
         TopicExchange exchange = new TopicExchange("order.exchange");
         Binding binding = BindingBuilder.bind(queue).to(exchange).with("order.created");
@@ -107,8 +96,6 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
 
-        // Gerçek Postgres'ten doğrudan kontrol (ES sync eksikliği nedeniyle
-        // HTTP GET yerine repository üzerinden doğruluyoruz)
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             List<OrderJpaEntity> all = orderRepository.findAll();
             Optional<OrderJpaEntity> created = all.stream()
@@ -152,8 +139,10 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
         HttpEntity<CreateOrderRequest> entity = new HttpEntity<>(request, customerHeaders(userId));
         restTemplate.postForEntity("http://localhost:" + port + "/api/orders", entity, String.class);
 
-        // @Scheduled(fixedRate = 5000) - en az 5sn beklenmeli, o yüzden 10sn payı bırakıyoruz
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+        // Scheduler kapalı: publisher'ı manuel tetikliyoruz (deterministik).
+        outboxEventPublisher.publishOutboxEvents();
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             Message message = rabbitTemplate.receive(TEST_VERIFICATION_QUEUE, 500);
             assertThat(message).isNotNull();
 
@@ -172,7 +161,10 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
         HttpEntity<CreateOrderRequest> entity = new HttpEntity<>(request, customerHeaders(userId));
         restTemplate.postForEntity("http://localhost:" + port + "/api/orders", entity, String.class);
 
-        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+        // Scheduler kapalı: publisher'ı manuel tetikliyoruz.
+        outboxEventPublisher.publishOutboxEvents();
+
+        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
             List<OutboxEventJpaEntity> events = outboxEventRepository.findAll();
             Optional<OutboxEventJpaEntity> event = events.stream()
                     .filter(e -> e.getPayload().contains(userId))
@@ -189,16 +181,10 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
         CreateOrderRequest request = new CreateOrderRequest("victim-user",
                 List.of(new OrderItemDto("prod-5", "store-1", 1, BigDecimal.valueOf(10))));
 
-        // X-User-Id header'ı "attacker-user", body'deki userId ise "victim-user"
         HttpEntity<CreateOrderRequest> entity = new HttpEntity<>(request, customerHeaders("attacker-user"));
         ResponseEntity<String> response = restTemplate.postForEntity(
                 "http://localhost:" + port + "/api/orders", entity, String.class);
 
-        // NOT: Şu an bir @ControllerAdvice/global exception handler olmadığı için
-        // UnauthorizedOrderAccessException muhtemelen 500 olarak dönüyor.
-        // Bu, isteğe (401/403 olması gerekirdi) göre bir iyileştirme fırsatı -
-        // subsystem test bunu şu haliyle (5xx) doğruluyor, ama önerim bir
-        // @ControllerAdvice ekleyip bu exception'ı 403'e map etmek.
         assertThat(response.getStatusCode().is5xxServerError()).isTrue();
 
         boolean orderCreatedForVictim = orderRepository.findAll().stream()

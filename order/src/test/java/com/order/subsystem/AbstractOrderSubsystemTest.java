@@ -15,12 +15,6 @@ public abstract class AbstractOrderSubsystemTest {
     static final RabbitMQContainer RABBITMQ;
     static final ElasticsearchContainer ELASTICSEARCH;
 
-    // Container'lar JVM ömrü boyunca bir kez başlatılır ve HİÇ durdurulmaz.
-    // @Container/@Testcontainers KULLANILMIYOR - onlar container'ı sınıf
-    // bazında durdurup yeniden başlatıyor ve CI'da reuse kapalı olduğu için
-    // ikinci test sınıfı çalışırken ilk sınıfın container'ları ölüyordu.
-    // Bu singleton pattern container'ları paylaştırır; JVM kapanışında
-    // Ryuk temizler.
     static {
         POSTGRES = new PostgreSQLContainer<>("postgres:16")
                 .withDatabaseName("orderdb_test")
@@ -54,5 +48,11 @@ public abstract class AbstractOrderSubsystemTest {
                 () -> "http://" + ELASTICSEARCH.getHttpHostAddress());
 
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
+
+        // Otomatik scheduler'ı KAPAT: @Scheduled outbox publisher, testin
+        // oluşturduğu/okuduğu order & outbox satırlarıyla yarışıp
+        // StaleObjectStateException'a yol açıyordu. Testte publisher'ı
+        // manuel tetikliyoruz (aşağıya bak), böylece deterministik çalışır.
+        registry.add("spring.task.scheduling.enabled", () -> "false");
     }
 }
