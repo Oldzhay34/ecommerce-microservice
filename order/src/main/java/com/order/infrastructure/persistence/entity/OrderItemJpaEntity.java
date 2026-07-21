@@ -7,8 +7,8 @@ import java.math.BigDecimal;
 @Table(name = "order_items")
 public class OrderItemJpaEntity {
 
+    // ID uygulama tarafından atanır; bkz. OrderJpaEntity#id açıklaması.
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)

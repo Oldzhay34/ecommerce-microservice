@@ -11,8 +11,12 @@ import java.util.List;
 @Table(name = "orders")
 public class OrderJpaEntity {
 
+    // ID uygulama tarafından atanır (OrderCommandUseCaseImpl.createOrder).
+    // @GeneratedValue OLURSA Hibernate, id dolu gelen entity'yi "detached"
+    // sayıp merge sırasında UPDATE dener; yeni siparişte hiçbir satır
+    // güncellenmediği için StaleObjectStateException fırlar. Assigned
+    // identifier'da merge önce SELECT atar, satır yoksa INSERT eder.
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
     @Column(name = "user_id", nullable = false)

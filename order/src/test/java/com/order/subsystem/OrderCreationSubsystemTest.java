@@ -96,13 +96,14 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
         ResponseEntity<String> response = restTemplate.postForEntity(
                 "http://localhost:" + port + "/api/orders", entity, String.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(response.getStatusCode())
+                .as("beklenmeyen yanıt gövdesi: %s", response.getBody())
+                .isEqualTo(HttpStatus.CREATED);
 
         await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            List<OrderJpaEntity> all = orderRepository.findAll();
-            Optional<OrderJpaEntity> created = all.stream()
-                    .filter(o -> userId.equals(o.getUserId()))
-                    .findFirst();
+            // findByUserId, items'ı EntityGraph ile eager çeker; findAll() ile
+            // gelen entity'lerde getItems() LazyInitializationException atardı.
+            Optional<OrderJpaEntity> created = orderRepository.findByUserId(userId).stream().findFirst();
 
             assertThat(created).isPresent();
             assertThat(created.get().getStatus()).isEqualTo(OrderStatus.PENDING);
