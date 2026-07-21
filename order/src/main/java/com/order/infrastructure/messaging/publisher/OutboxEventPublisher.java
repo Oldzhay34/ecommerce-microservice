@@ -22,7 +22,10 @@ public class OutboxEventPublisher {
         this.rabbitTemplate = rabbitTemplate;
     }
 
-    @Scheduled(fixedRate = 5000)
+    // Testlerde app.outbox.publish-rate-ms çok büyük verilerek arka plan
+    // yayınlayıcısı pratikte devre dışı bırakılır; testler publishOutboxEvents()
+    // metodunu elle çağırarak deterministik çalışır.
+    @Scheduled(fixedRateString = "${app.outbox.publish-rate-ms:5000}")
     @Transactional
     public void publishOutboxEvents() {
         List<OutboxEventJpaEntity> unprocessedEvents = outboxEventRepository.findTop50ByProcessedFalseOrderByCreatedAtAsc();

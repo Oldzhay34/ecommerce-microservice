@@ -31,6 +31,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
+                        // Bir handler exception fırlattığında container isteği
+                        // ERROR dispatch ile /error'a yönlendirir. JwtAuthFilter
+                        // bir OncePerRequestFilter olduğu için ERROR dispatch'te
+                        // çalışmaz (shouldNotFilterErrorDispatch=true), dolayısıyla
+                        // SecurityContext boştur. /error permitAll olmazsa her 5xx
+                        // istemciye 403 olarak döner ve asıl hata gizlenir.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
                         .anyRequest().authenticated()
                 )

@@ -29,9 +29,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -142,12 +144,19 @@ class OrderCreationSubsystemTest extends AbstractOrderSubsystemTest {
         // Scheduler kapalı: publisher'ı manuel tetikliyoruz (deterministik).
         outboxEventPublisher.publishOutboxEvents();
 
-        await().atMost(Duration.ofSeconds(5)).untilAsserted(() -> {
-            Message message = rabbitTemplate.receive(TEST_VERIFICATION_QUEUE, 500);
-            assertThat(message).isNotNull();
-
-            String payload = new String(message.getBody());
-            assertThat(payload).contains(userId);
+        // publishOutboxEvents() işlenmemiş TÜM outbox kayıtlarını yayınlar; bu
+        // yüzden kuyrukta önceki testlerden kalan event'ler de olabilir. İlk
+        // mesaja bakmak yerine kuyruğu drenaj edip bu teste ait olanı arıyoruz.
+        AtomicBoolean found = new AtomicBoolean(false);
+        await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
+            Message message;
+            while (!found.get()
+                    && (message = rabbitTemplate.receive(TEST_VERIFICATION_QUEUE, 200)) != null) {
+                if (new String(message.getBody(), StandardCharsets.UTF_8).contains(userId)) {
+                    found.set(true);
+                }
+            }
+            assertThat(found).isTrue();
         });
     }
 

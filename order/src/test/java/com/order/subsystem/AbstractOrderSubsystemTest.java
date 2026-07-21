@@ -49,10 +49,12 @@ public abstract class AbstractOrderSubsystemTest {
 
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "update");
 
-        // Otomatik scheduler'ı KAPAT: @Scheduled outbox publisher, testin
-        // oluşturduğu/okuduğu order & outbox satırlarıyla yarışıp
-        // StaleObjectStateException'a yol açıyordu. Testte publisher'ı
-        // manuel tetikliyoruz (aşağıya bak), böylece deterministik çalışır.
-        registry.add("spring.task.scheduling.enabled", () -> "false");
+        // Otomatik scheduler'ı pratikte KAPAT: @Scheduled outbox publisher,
+        // testin oluşturduğu/okuduğu outbox satırlarıyla yarışıyordu. Testte
+        // publisher'ı manuel tetikliyoruz, böylece deterministik çalışır.
+        // NOT: "spring.task.scheduling.enabled" diye bir Spring Boot property'si
+        // YOKTUR; eskiden burada o kullanıldığı için scheduler aslında hiç
+        // kapanmıyordu.
+        registry.add("app.outbox.publish-rate-ms", () -> "3600000");
     }
 }
