@@ -37,9 +37,9 @@ public final class PaymentTestInfrastructure {
         // RabbitMQ Container
         RABBITMQ = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3.13-management"));
 
-        // Elasticsearch Container
+        // Elasticsearch Container (Sürüm 8.13.4 olarak güncellendi)
         ELASTICSEARCH = new ElasticsearchContainer(
-                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.15.0"))
+                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.13.4"))
                 .withEnv("xpack.security.enabled", "false")
                 .withEnv("discovery.type", "single-node")
                 .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
