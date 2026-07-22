@@ -1,0 +1,61 @@
+name: Review Service CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'review/**'
+      - '.github/workflows/review-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'review/**'
+      - '.github/workflows/review-ci.yml'
+
+defaults:
+  run:
+    working-directory: review
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+        continue-on-error: true
+
+      - name: Build and run tests (Maven)
+        run: mvn -B clean verify
+        # NOT: review-service'in subsystem ve system-alpha testleri Testcontainers
+        # ile Postgres + RabbitMQ + Elasticsearch ayağa kaldırır. ubuntu-latest
+        # runner'da Docker hazır geldiği için ekstra bir `services:` tanımına
+        # gerek yoktur. Unit ve integration (@WebMvcTest) katmanları Docker'sız
+        # da çalışır.
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-test-results
+          path: review/target/surefire-reports/**/*.xml
+          retention-days: 7
+
+      - name: Upload build artifact (jar)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-service-jar
+          path: review/target/*.jar
+          retention-days: 7

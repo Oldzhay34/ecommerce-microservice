@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  admin-mfe-payments:
+    build: .
+    container_name: admin-mfe-payments
+    ports:
+      - "6102:80"
+    restart: unless-stopped

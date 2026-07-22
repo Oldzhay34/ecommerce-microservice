@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  admin-mfe-orders:
+    build: .
+    container_name: admin-mfe-orders
+    ports:
+      - "6101:80"
+    restart: unless-stopped

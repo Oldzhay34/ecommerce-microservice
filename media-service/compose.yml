@@ -1,0 +1,89 @@
+services:
+
+  media-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: media-service
+    ports:
+      - "8096:8086"
+    environment:
+      DB_USER: media_user
+      DB_PASSWORD: media_pass
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Gateway rate limiter db 5 kullaniyor; media cache db 6'da izole.
+      REDIS_DATABASE: 6
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ecommerce_admin
+      RABBITMQ_PASSWORD: EcommerceSecurePass2026!
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+      # Frontend tarayicidan erisecegi icin localhost; container ici endpoint'ten FARKLIDIR.
+      MEDIA_PUBLIC_BASE_URL: http://localhost:9000/shopbridge-media
+      # Gateway ile BIREBIR AYNI - duz string, Base64 DEGIL.
+      JWT_SECRET: EcommerceSharedJwtSecretKey2026VeryLongAndSecure32Bytes
+    depends_on:
+      media-postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - ecommerce-shared-network
+    restart: unless-stopped
+
+  media-postgres:
+    image: postgres:16-alpine
+    container_name: media-postgres
+    environment:
+      POSTGRES_DB: shopbridge_media
+      POSTGRES_USER: media_user
+      POSTGRES_PASSWORD: media_pass
+    ports:
+      # 5436 postgres_cart tarafindan kullaniliyor -> 5437.
+      # Bu YALNIZCA host'tan psql/DBeaver erisimi icindir.
+      # media-service container ici agdan media-postgres:5432 ile baglanir;
+      # application.yml'deki datasource URL'i DEGISMEZ.
+      - "5445:5432"
+    volumes:
+      - media-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U media_user -d shopbridge_media"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-shared-network
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:RELEASE.2024-10-13T13-34-11Z
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-shared-network
+    restart: unless-stopped
+
+volumes:
+  media-postgres-data:
+  minio-data:
+
+networks:
+  ecommerce-shared-network:
+    external: true
+    name: ecommerce-shared-network

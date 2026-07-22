@@ -1,0 +1,51 @@
+services:
+  payment-service:
+    build: .
+    ports:
+      - "8086:8084"
+    environment:
+      - DB_HOST=postgres-payment
+      - DB_PORT=5432
+      - DB_NAME=paymentdb
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - ES_URIS=http://ecommerce-elasticsearch:9200
+      - ES_INDEX_PREFIX=payment
+      - RABBITMQ_HOST=ecommerce-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=ecommerce_admin
+      - RABBITMQ_PASS=EcommerceSecurePass2026!    # <-- PASSWORD değil PASS
+      - REDIS_HOST=ecommerce-redis
+      - REDIS_PORT=6379
+      - REDIS_DATABASE=3
+    depends_on:
+      postgres-payment:
+        condition: service_healthy
+    networks:
+      - ecommerce-shared-network
+
+  postgres-payment:
+    image: postgres:16-alpine
+    container_name: postgres-payment
+    environment:
+      POSTGRES_DB: paymentdb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5439:5432"
+    volumes:
+      - pg-payment-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paymentdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-shared-network
+
+volumes:
+  pg-payment-data:
+
+networks:
+  ecommerce-shared-network:
+    external: true

@@ -1,0 +1,12 @@
+services:
+  mfe-products:
+    build: .
+    container_name: shopbridge-mfe-products
+    ports:
+      - "5005:80"
+    networks:
+      - ecommerce-shared-network
+
+networks:
+  ecommerce-shared-network:
+    external: true

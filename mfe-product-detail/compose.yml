@@ -1,0 +1,10 @@
+services:
+  mfe-product-detail:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mfe-product-detail
+    image: shopbridge/mfe-product-detail:latest
+    ports:
+      - "6010:80"
+    restart: unless-stopped

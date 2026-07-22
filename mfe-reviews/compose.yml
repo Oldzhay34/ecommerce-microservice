@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  mfe-reviews:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mfe-reviews
+    ports:
+      # Host makinenin 6004 portunu, Nginx'in 80 portuna yönlendirir
+      - "6004:8080"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production

@@ -1,0 +1,15 @@
+services:
+  mfe-orders:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopbridge-mfe-orders
+    ports:
+      - "5001:5001"
+    networks:
+      - shopbridge-network
+    restart: unless-stopped
+
+networks:
+  shopbridge-network:
+    external: true

@@ -1,0 +1,16 @@
+services:
+  mfe-reviews:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopbridge-mfe-reviews
+    ports:
+      - "5004:5004"
+    networks:
+      - shopbridge-network
+    restart: unless-stopped
+
+networks:
+  # Daha önce oluşturduğumuz ortak ağı kullanıyoruz
+  shopbridge-network:
+    external: true

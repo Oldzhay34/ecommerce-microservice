@@ -1,0 +1,64 @@
+name: API Gateway CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'api-gateway/**'
+      - '.github/workflows/api-gateway-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'api-gateway/**'
+      - '.github/workflows/api-gateway-ci.yml'
+
+defaults:
+  run:
+    working-directory: api-gateway
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Build and run tests (Maven)
+        run: mvn -B clean verify
+        # NOT: api-gateway'de Maven wrapper (mvnw) yoktur, runner'daki mvn kullanilir.
+        #
+        # Test katmanlari:
+        #   unit        -> saf JUnit/Mockito, altyapi gerektirmez
+        #   integration -> @SpringBootTest + WebTestClient, downstream MockWebServer (in-process)
+        #   subsystem   -> Testcontainers Redis (gercek rate limiter) + MockWebServer
+        #   systemalpha -> tam stack black-box E2E (Redis container + sahte downstream)
+        #
+        # subsystem/systemalpha sinifları @Testcontainers(disabledWithoutDocker = true)
+        # ile isaretlidir: Docker'i olmayan gelistirici makinelerinde ATLANIR, ubuntu-latest
+        # runner'da Docker kurulu oldugu icin GERCEKTEN CALISIR. Ekstra service tanimina
+        # gerek yoktur; Redis container'ini Testcontainers kendisi ayaga kaldirir.
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-gateway-test-results
+          path: api-gateway/target/surefire-reports/**/*.xml
+          retention-days: 7
+
+      - name: Upload build artifact (jar)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-gateway-jar
+          path: api-gateway/target/*.jar
+          retention-days: 7

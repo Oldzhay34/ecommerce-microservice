@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  mfe-media-gallery:
+    build: .
+    ports:
+      - "6008:6008"
+    environment:
+      - VITE_API_GATEWAY_URL=http://api-gateway:8080
+    networks:
+      - shopbridge-network
+
+networks:
+  shopbridge-network:
+    external: true

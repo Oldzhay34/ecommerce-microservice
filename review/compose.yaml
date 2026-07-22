@@ -1,0 +1,42 @@
+services:
+  review-service:
+    build: .
+    ports:
+      - "8087:8084"
+    environment:
+      - DB_HOST=postgres-review
+      - DB_PORT=5432
+      - DB_NAME=review_db
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - ES_URIS=http://ecommerce-elasticsearch:9200
+      - ES_INDEX_PREFIX=review
+      - RABBITMQ_HOST=ecommerce-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=ecommerce_admin
+      - RABBITMQ_PASSWORD=EcommerceSecurePass2026!
+      - JWT_SECRET=EcommerceSharedJwtSecretKey2026VeryLongAndSecure32Bytes
+    depends_on:
+      - postgres-review
+    networks:
+      - ecommerce-shared-network
+
+  postgres-review:
+    image: postgres:16
+    environment:
+      - POSTGRES_DB=review_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5440:5432"
+    volumes:
+      - review-db-data:/var/lib/postgresql/data
+    networks:
+      - ecommerce-shared-network
+
+volumes:
+  review-db-data:
+
+networks:
+  ecommerce-shared-network:
+    external: true

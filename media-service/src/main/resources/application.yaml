@@ -1,0 +1,101 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: media-service
+
+  datasource:
+    url: jdbc:postgresql://media-postgres:5432/shopbridge_media
+    username: ${DB_USER:media_user}
+    password: ${DB_PASSWORD:media_pass}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 3
+      connection-timeout: 30000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        jdbc:
+          batch_size: 30
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  data:
+    redis:
+      host: ${REDIS_HOST:redis}
+      port: ${REDIS_PORT:6379}
+      # Gateway rate limiter db 5 kullanir; media cache db 6'da izole edilir.
+      database: ${REDIS_DATABASE:6}
+      timeout: 2000ms
+      lettuce:
+        pool:
+          max-active: 16
+          max-idle: 8
+          min-idle: 2
+
+  rabbitmq:
+    host: ${RABBITMQ_HOST:rabbitmq}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 2000ms
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 5MB
+      max-request-size: 25MB
+      file-size-threshold: 1MB
+
+media:
+  public-base-url: ${MEDIA_PUBLIC_BASE_URL:http://localhost:9000/shopbridge-media}
+  max-images-per-product: 10
+  webp:
+    quality: 82
+    method: 4
+  conversion:
+    pool-size: 4
+  cache:
+    # [Karar A] MASTER_CONTEXT v1.4'teki TTL 24h -> operasyonel karar ile 30 dk hard TTL.
+    # Prompt'un "quality/method disari alinir" desenıyle ayni: deger burada.
+    ttl-minutes: 30
+  variant:
+    thumb-width: 200
+    medium-width: 800
+    original-max-width: 2000
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://minio:9000}
+  access-key: ${MINIO_ROOT_USER:minioadmin}
+  secret-key: ${MINIO_ROOT_PASSWORD:minioadmin123}
+  bucket: shopbridge-media
+
+app:
+  security:
+    # Gateway ile BIREBIR AYNI - duz string, Base64 DEGIL.
+    # Hizasizsa JwtAuthFilter token'i dogrulayamaz ve korumali endpoint'ler SESSIZCE 403 doner.
+    jwt-secret: ${JWT_SECRET:EcommerceSharedJwtSecretKey2026VeryLongAndSecure32Bytes}
+
+logging:
+  level:
+    com.media: INFO
+    org.springframework.security: WARN

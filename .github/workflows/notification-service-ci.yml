@@ -1,0 +1,84 @@
+name: Notification Service CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'notification-service/**'
+      - '.github/workflows/notification-service-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'notification-service/**'
+      - '.github/workflows/notification-service-ci.yml'
+
+defaults:
+  run:
+    working-directory: notification-service
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # notification-service pom'u java.version=21 (Spring Boot 3.3.4) istiyor.
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+        continue-on-error: true
+
+      # Subsystem + system-alpha + JDBC adapter testleri Testcontainers kullanır ve
+      # Docker yoksa @EnabledIf ile SESSİZCE SKIP edilir. Bu adım, runner'da Docker
+      # gerçekten yoksa build'i burada kırar; böylece CI "yeşil ama hiçbir şey
+      # koşmamış" duruma düşemez.
+      - name: Verify Docker is available (Testcontainers ön koşulu)
+        run: docker info
+
+      - name: Build and run tests (Maven)
+        run: mvn -B clean verify
+        # NOT: Postgres + RabbitMQ container'ları Testcontainers tarafından
+        # ayağa kaldırılır; SMTP tarafı in-process GreenMail ile sağlandığı için
+        # ekstra bir service tanımına gerek yoktur.
+
+      # Testcontainers testlerinin CI'da gerçekten koştuğunu doğrula: subsystem ve
+      # system-alpha raporlarında skipped sayısı 0 olmalı.
+      - name: Assert Testcontainers tests were not skipped
+        if: always()
+        run: |
+          set -e
+          for report in target/surefire-reports/TEST-com.notificationservice.subsystem.*.xml \
+                        target/surefire-reports/TEST-com.notificationservice.systemalpha.*.xml \
+                        target/surefire-reports/TEST-com.notificationservice.integration.*.xml; do
+            [ -e "$report" ] || { echo "Rapor bulunamadi: $report"; exit 1; }
+            if grep -q 'skipped="[1-9]' "$report"; then
+              echo "HATA: $report icinde skip edilen test var (Docker gating yanlis tetiklenmis olabilir)."
+              exit 1
+            fi
+          done
+          echo "Tum Testcontainers/GreenMail testleri calisti."
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notification-service-test-results
+          path: notification-service/target/surefire-reports/**/*.xml
+          retention-days: 7
+
+      - name: Upload build artifact (jar)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notification-service-jar
+          path: notification-service/target/*.jar
+          retention-days: 7

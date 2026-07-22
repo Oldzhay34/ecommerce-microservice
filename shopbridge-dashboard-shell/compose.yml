@@ -1,0 +1,16 @@
+services:
+  dashboard-shell:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopbridge-shell
+    ports:
+      - "5000:5000"
+    networks:
+      - shopbridge-network
+    restart: unless-stopped
+
+# Dışarıda oluşturduğumuz ortak ağı kullanacağımızı belirtiyoruz
+networks:
+  shopbridge-network:
+    external: true

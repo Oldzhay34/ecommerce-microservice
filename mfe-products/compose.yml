@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  mfe-products:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # React uygulamanızın API isteklerini atacağı Gateway adresi.
+        # Vite bu değişkeni build anında statik dosyalara işleyecektir.
+        - VITE_API_GATEWAY_URL=http://localhost:8080
+    container_name: mfe_products
+    ports:
+      - "6005:6005"
+    restart: unless-stopped
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

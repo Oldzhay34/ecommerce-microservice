@@ -1,0 +1,10 @@
+version: '3.8'
+services:
+  admin-dashboard-shell:
+    build: .
+    container_name: admin-dashboard-shell
+    ports:
+      - "3002:80"
+    environment:
+      - VITE_API_GATEWAY_URL=http://api-gateway:8080
+    restart: unless-stopped

@@ -1,0 +1,39 @@
+# =====================================================================
+# API GATEWAY - Bagimsiz docker-compose
+# =====================================================================
+# Diger servisler gibi KENDI klasorunde, kendi compose'uyla calisir.
+# Bu dosyayi api-gateway/ klasorune koy ve soyle baslat:
+#
+#     docker compose up -d --build
+#
+# ONKOSUL: Diger servisler (auth, order, cart, payment, review, product)
+# ZATEN ayakta ve 'ecommerce-shared-network' agina bagli olmali.
+# Gateway onlara CONTAINER ADI + IC PORT ile erisir (host portlarina degil).
+# =====================================================================
+
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      # Host 8080 -> container 8080. Frontend bu adrese istek atar: http://localhost:8080
+      - "8080:8080"
+    environment:
+      # .env dosyasindan okunur (ayni dizinde)
+      - JWT_SECRET=${JWT_SECRET_KEY}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_DATABASE=${REDIS_DATABASE}
+    restart: unless-stopped
+    # NOT: depends_on YOK. Cunku diger servisler ayri compose'larda ve
+    # bu compose onlari tanimlamiyor. Onlarin ayakta oldugunu sen garanti
+    # edeceksin. Gateway, hedef servis gecici olarak yoksa 503 doner (graceful).
+    networks:
+      - ecommerce-shared-network
+
+networks:
+  # Diger servislerin olusturdugu ortak ag. Gateway sadece BAGLANIR (external).
+  ecommerce-shared-network:
+    external: true

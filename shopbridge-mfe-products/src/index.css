@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+@theme {
+    --color-brand-shop: #000000;
+    --color-brand-bridge: #1D4ED8;
+}

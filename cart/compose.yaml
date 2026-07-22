@@ -1,0 +1,58 @@
+services:
+  cart-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cart_service
+    ports:
+      - "8083:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=docker
+      - DB_HOST=postgres-cart
+      - DB_PORT=5432
+      - DB_NAME=cart_db
+      - DB_USER=cart_user
+      - DB_PASS=cart_password
+      - REDIS_HOST=ecommerce-redis
+      - REDIS_PORT=6379
+      - REDIS_DATABASE=4
+      - RABBITMQ_HOST=ecommerce-rabbitmq
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=ecommerce_admin
+      - RABBITMQ_PASS=EcommerceSecurePass2026!
+      - SPRING_AUTOCONFIGURE_EXCLUDE=org.springframework.modulith.events.amqp.RabbitJackson2Configuration
+    depends_on:
+      postgres-cart:
+        condition: service_healthy
+    networks:
+      # Container adi cart_service (alt cizgi) Java URI parse'ini bozdugu icin
+      # gateway'in ulasabilmesi adina tireli bir ag alias'i eklendi: cart-service
+      ecommerce-shared-network:
+        aliases:
+          - cart-service
+
+  postgres-cart:
+    image: postgres:16-alpine
+    container_name: postgres_cart
+    environment:
+      - POSTGRES_DB=cart_db
+      - POSTGRES_USER=cart_user
+      - POSTGRES_PASSWORD=cart_password
+    ports:
+      - "5436:5432"
+    volumes:
+      - pg_cart_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cart_user -d cart_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - ecommerce-shared-network
+
+volumes:
+  pg_cart_data:
+
+networks:
+  ecommerce-shared-network:
+    external: true

@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body,
+#root {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    background-color: #f4f5f7;
+    color: #111827;
+    font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+@keyframes sb-shimmer-keyframes {
+    0% {
+        background-position: -560px 0;
+    }
+    100% {
+        background-position: 560px 0;
+    }
+}
+
+.sb-shimmer {
+    background-color: #f3f4f6;
+    background-image: linear-gradient(
+            90deg,
+            #f3f4f6 0px,
+            #e9eaee 240px,
+            #f3f4f6 480px
+    );
+    background-size: 560px 100%;
+    background-repeat: no-repeat;
+    animation: sb-shimmer-keyframes 1.4s ease-in-out infinite;
+}

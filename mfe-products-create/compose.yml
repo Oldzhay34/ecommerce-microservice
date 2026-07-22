@@ -1,0 +1,8 @@
+services:
+  mfe-products-create:
+    build:
+      context: .
+      args:
+        VITE_API_GATEWAY_URL: http://localhost:8080
+    ports:
+      - "6006:8080"

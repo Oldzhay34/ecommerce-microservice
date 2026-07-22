@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mfe-orders:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        # Gerekliyse API Gateway adresinizi buradan geçebilirsiniz
+        - VITE_API_GATEWAY_URL=http://localhost:8080
+    container_name: mfe_orders
+    ports:
+      - "6001:6001"
+    restart: unless-stopped
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge

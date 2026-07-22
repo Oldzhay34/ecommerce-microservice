@@ -1,0 +1,16 @@
+services:
+  mfe-payments:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopbridge-mfe-payments
+    ports:
+      - "5003:5003"
+    networks:
+      - shopbridge-network
+    restart: unless-stopped
+
+networks:
+  # Tüm mikro-frontend'lerin haberleştiği ortak dış ağ
+  shopbridge-network:
+    external: true

@@ -1,0 +1,126 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  # Media servisi multipart upload (max 5MB dosya) Gateway uzerinden gecer.
+  # WebFlux varsayilan in-memory buffer 256KB'dir ve 5MB'lik istegi
+  # DataBufferLimitException ile keser. 6MB = 5MB dosya + multipart overhead.
+  codec:
+    max-in-memory-size: 6MB
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      database: ${REDIS_DATABASE:5}
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: http://promptengineering-auth-service-1:8082
+          predicates:
+            - Path=/api/v1/auth/**
+
+        - id: product-service-search
+          uri: http://product-product-service-1:8083
+          predicates:
+            - Path=/api/v1/products/search
+
+        - id: product-service
+          uri: http://product-product-service-1:8083
+          predicates:
+            - Path=/api/v1/products/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
+        # Media Service (yeni).
+        # Limit digerlerinden yuksek (20/40): urun detay ekrani token'siz
+        # GET .../images cagirir, liste ekrani POST .../batch ile 100 id sorgular.
+        # 10/20 galeri gezinmede 429 uretirdi.
+        # userKeyResolver X-User-Id yoksa IP'ye duser -> public endpoint'ler de limitlenir.
+        - id: media-service
+          uri: http://media-service:8086
+          predicates:
+            - Path=/api/v1/media/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 20
+                redis-rate-limiter.burstCapacity: 40
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: order-service
+          uri: http://order-service:8081
+          predicates:
+            - Path=/api/orders/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
+        # cart alt cizgi (cart_service) URI parse hatasi verdigi icin
+        # cart compose'una eklenen 'cart-service' (tireli) alias'i kullanilir.
+        - id: cart-service
+          uri: http://cart-service:8080
+          predicates:
+            - Path=/api/carts/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: payment-service
+          uri: http://payment-payment-service-1:8084
+          predicates:
+            - Path=/api/payments/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
+        - id: review-service
+          uri: http://review-review-service-1:8084
+          predicates:
+            - Path=/api/reviews/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+                key-resolver: "#{@userKeyResolver}"
+
+app:
+  security:
+    jwt-secret: ${JWT_SECRET:EcommerceSharedJwtSecretKey2026VeryLongAndSecure32Bytes}
+
+gateway:
+  route-config:
+    java-enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO

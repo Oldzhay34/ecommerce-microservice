@@ -1,0 +1,123 @@
+name: Ecommerce Infra CI
+
+# ecommerce-infra sadece paylasilan altyapiyi (RabbitMQ, Elasticsearch, Redis)
+# tanimlayan bir compose dosyasidir; Java kodu icermez. Bu yuzden burada birim
+# testi degil, compose dosyasinin gecerliligini ve stack'in gercekten saglikli
+# ayaga kalktigini dogrulayan bir smoke testi kosuyoruz.
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ecommerce-infra/**'
+      - '.github/workflows/ecommerce-infra-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'ecommerce-infra/**'
+      - '.github/workflows/ecommerce-infra-ci.yml'
+
+defaults:
+  run:
+    working-directory: ecommerce-infra
+
+env:
+  # compose.yml bu iki degiskeni .env dosyasindan bekler, ancak .env
+  # .gitignore'da oldugu icin CI checkout'unda bulunmaz. Asagida CI'a ozel
+  # gecici bir .env uretiyoruz; bunlar yalnizca tek kullanimlik test
+  # kimlik bilgileridir, hicbir gercek ortamda kullanilmaz.
+  RABBITMQ_USER: ci_user
+  RABBITMQ_PASSWORD: ci_password
+  COMPOSE_NETWORK: ecommerce-shared-network
+
+jobs:
+  validate-and-smoke:
+    name: Validate compose & smoke test stack
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate CI-only .env
+        run: |
+          cat > .env <<EOF
+          RABBITMQ_USER=${RABBITMQ_USER}
+          RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+          EOF
+
+      - name: Validate compose syntax
+        # Degiskenler cozulemezse veya YAML bozuksa burada patlar.
+        run: docker compose -f compose.yml config
+
+      - name: Lint compose conventions
+        # Her servisin healthcheck'i olmali (asagidaki "up --wait" buna dayaniyor)
+        # ve hicbir imaj kaymaya acik :latest etiketi kullanmamali.
+        run: |
+          python3 - <<'PY'
+          import subprocess, sys, yaml
+          cfg = yaml.safe_load(subprocess.check_output(
+              ["docker", "compose", "-f", "compose.yml", "config"], text=True))
+          problems = []
+          for name, svc in (cfg.get("services") or {}).items():
+              if not svc.get("healthcheck"):
+                  problems.append(f"{name}: healthcheck tanimli degil")
+              image = svc.get("image", "")
+              if ":" not in image.rsplit("/", 1)[-1] or image.endswith(":latest"):
+                  problems.append(f"{name}: imaj sabit bir surume sabitlenmemis ({image!r})")
+          if problems:
+              print("Compose lint hatalari:")
+              for p in problems:
+                  print(f"  - {p}")
+              sys.exit(1)
+          print(f"Compose lint OK ({len(cfg.get('services') or {})} servis)")
+          PY
+
+      - name: Create external shared network
+        # compose.yml agi "external: true" olarak tanimliyor, yani onceden
+        # var olmasi gerekiyor; compose bunu kendisi olusturmaz.
+        run: docker network create "${COMPOSE_NETWORK}" || true
+
+      - name: Start stack and wait for healthy
+        # --wait, her servisin healthcheck'i "healthy" olana kadar bekler.
+        # Elasticsearch'un start_period'u 60s oldugu icin timeout genis tutuldu.
+        run: docker compose -f compose.yml up -d --wait --wait-timeout 420
+
+      - name: Smoke test - RabbitMQ
+        run: |
+          docker exec ecommerce-rabbitmq rabbitmq-diagnostics -q ping
+          # Management API'nin de ayakta ve kimlik dogrulamasinin calistigini dogrula.
+          curl -fsS -u "${RABBITMQ_USER}:${RABBITMQ_PASSWORD}" \
+            http://localhost:15672/api/overview > /dev/null
+          echo "RabbitMQ OK (amqp 5672 / management 15672)"
+
+      - name: Smoke test - Elasticsearch
+        run: |
+          health=$(curl -fsS http://localhost:9200/_cluster/health)
+          echo "$health"
+          status=$(echo "$health" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')
+          if [ "$status" = "red" ]; then
+            echo "Elasticsearch cluster durumu 'red'" >&2
+            exit 1
+          fi
+          echo "Elasticsearch OK (status=$status)"
+
+      - name: Smoke test - Redis
+        run: |
+          pong=$(docker exec ecommerce-redis redis-cli ping)
+          [ "$pong" = "PONG" ] || { echo "Redis PING yanitlamadi: $pong" >&2; exit 1; }
+          # Gercek bir yazma/okuma turu, salt ping'den daha anlamli.
+          docker exec ecommerce-redis redis-cli set ci:smoke ok > /dev/null
+          value=$(docker exec ecommerce-redis redis-cli get ci:smoke)
+          [ "$value" = "ok" ] || { echo "Redis set/get basarisiz: $value" >&2; exit 1; }
+          echo "Redis OK (ping + set/get)"
+
+      - name: Dump container logs on failure
+        if: failure()
+        run: docker compose -f compose.yml logs --no-color --tail 200
+
+      - name: Tear down
+        if: always()
+        run: |
+          docker compose -f compose.yml down -v --remove-orphans || true
+          docker network rm "${COMPOSE_NETWORK}" || true

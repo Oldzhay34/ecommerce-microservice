@@ -1,0 +1,8 @@
+version: '3.8'
+services:
+  admin-mfe-reviews:
+    build: .
+    container_name: admin-mfe-reviews
+    ports:
+      - "6103:80"
+    restart: unless-stopped

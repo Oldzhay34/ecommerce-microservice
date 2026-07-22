@@ -1,0 +1,16 @@
+services:
+  mfe-cart:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: shopbridge-mfe-cart
+    ports:
+      - "5002:5002"
+    networks:
+      - shopbridge-network
+    restart: unless-stopped
+
+networks:
+  # Daha önce oluşturduğumuz dış ağı kullanıyoruz
+  shopbridge-network:
+    external: true

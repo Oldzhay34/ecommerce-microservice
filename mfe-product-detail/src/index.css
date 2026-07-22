@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    .sb-shimmer {
+        background-image: linear-gradient(
+                90deg,
+                #F3F4F6 0%,
+                #E5E7EB 50%,
+                #F3F4F6 100%
+        );
+        background-size: 200% 100%;
+        animation: sb-shimmer-move 1.4s ease-in-out infinite;
+    }
+}
+
+@keyframes sb-shimmer-move {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
