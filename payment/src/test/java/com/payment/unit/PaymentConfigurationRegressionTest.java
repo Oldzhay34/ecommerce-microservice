@@ -4,6 +4,7 @@ import com.payment.PaymentApplication;
 import com.payment.api.dto.RefundRequest;
 import com.payment.infrastructure.gateway.dev.DevPaymentGatewayAdapter;
 import com.payment.infrastructure.gateway.iyzico.IyzicoPaymentGatewayAdapter;
+import com.payment.infrastructure.messaging.RabbitMQConfig;
 import com.payment.infrastructure.messaging.publisher.OutboxEventPublisher;
 import com.payment.infrastructure.persistence.entity.PaymentJpaEntity;
 import com.payment.infrastructure.persistence.repository.PaymentRepository;
@@ -15,6 +16,7 @@ import jakarta.validation.ValidatorFactory;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
@@ -74,6 +76,24 @@ class PaymentConfigurationRegressionTest {
         Method method = PaymentRepository.class.getMethod("existsByOrderId", UUID.class);
 
         assertThat(method.getReturnType()).isEqualTo(boolean.class);
+    }
+
+    /**
+     * BUG 4 (DÜZELTİLDİ): OutboxEventPublisher olayları "payment.exchange"e
+     * yayınlıyordu, ancak bu exchange hiçbir yerde TANIMLI DEĞİLDİ. Var olmayan
+     * exchange'e gönderilen mesajı broker sessizce düşürür; outbox satırı ise
+     * "yayınlandı" sayılıp siliniyordu. Her ödeme/iade olayı kalıcı kaybediliyordu.
+     */
+    @Test
+    @DisplayName("U97: RabbitMQConfig - Yayın yapılan payment.exchange bean olarak TANIMLI olmalı")
+    void rabbitMqConfig_ShouldDeclarePaymentExchangeThatOutboxPublishesTo() throws Exception {
+        Method exchangeBean = RabbitMQConfig.class.getMethod("paymentExchange");
+
+        assertThat(exchangeBean.getAnnotation(Bean.class))
+                .as("payment.exchange tanımlı değilse yayınlanan her olay broker tarafından düşürülür")
+                .isNotNull();
+        assertThat(new RabbitMQConfig().paymentExchange().getName()).isEqualTo("payment.exchange");
+        assertThat(RabbitMQConfig.PAYMENT_EXCHANGE).isEqualTo("payment.exchange");
     }
 
     /**

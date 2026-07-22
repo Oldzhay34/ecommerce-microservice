@@ -1,5 +1,6 @@
 package com.payment.infrastructure.messaging.publisher;
 
+import com.payment.infrastructure.messaging.RabbitMQConfig;
 import com.payment.infrastructure.persistence.entity.OutboxJpaEntity;
 import com.payment.infrastructure.persistence.repository.OutboxRepository;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -29,7 +30,7 @@ public class OutboxEventPublisher {
         List<OutboxJpaEntity> events = outboxRepository.findAll();
         for (OutboxJpaEntity event : events) {
             String routingKey = determineRoutingKey(event.getType());
-            rabbitTemplate.convertAndSend("payment.exchange", routingKey, event.getPayload());
+            rabbitTemplate.convertAndSend(RabbitMQConfig.PAYMENT_EXCHANGE, routingKey, event.getPayload());
             outboxRepository.delete(event);
         }
     }

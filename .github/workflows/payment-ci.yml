@@ -1,0 +1,97 @@
+name: Payment Service CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'payment/**'
+      - '.github/workflows/payment-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'payment/**'
+      - '.github/workflows/payment-ci.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: payment
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # payment/pom.xml java.version=21 istiyor (Spring Boot 4.1.0).
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+        continue-on-error: true
+
+      # subsystem + system-alpha + PaymentApplicationTests Testcontainers kullanır ve
+      # Docker yoksa @EnabledIf ile SESSİZCE SKIP edilir. Bu adım, runner'da Docker
+      # gerçekten yoksa build'i burada kırar; böylece CI "yeşil ama hiçbir şey
+      # koşmamış" duruma düşemez.
+      - name: Verify Docker is available (Testcontainers ön koşulu)
+        run: docker info
+
+      - name: Build and run tests (Maven)
+        run: mvn -B clean verify
+        # Katmanlar:
+        #   com.payment.unit.*        -> saf Mockito, altyapı gerektirmez
+        #   com.payment.integration.* -> @WebMvcTest + gerçek Spring Security filtre
+        #                                zinciri, ayrıca MockWebServer'a karşı gerçek
+        #                                HTTP gateway davranışı
+        #   com.payment.subsystem.*   -> Testcontainers (Postgres + RabbitMQ + Elasticsearch)
+        #   com.payment.systemalpha.* -> tam stack black-box E2E (aynı container'lar)
+        #
+        # NOT: subsystem ve systemalpha katmanları Docker gerektirir; ubuntu-latest
+        # runner'da Docker kurulu olduğu için ekstra bir service tanımına gerek yoktur.
+
+      # Container gerektiren testlerin CI'da GERÇEKTEN koştuğunu doğrula: raporlar
+      # var olmalı, skipped sayısı 0 olmalı ve tests sayısı 0'dan büyük olmalı.
+      - name: Assert Testcontainers tests were not skipped
+        if: always()
+        run: |
+          set -e
+          for report in target/surefire-reports/TEST-com.payment.PaymentApplicationTests.xml \
+                        target/surefire-reports/TEST-com.payment.subsystem.*.xml \
+                        target/surefire-reports/TEST-com.payment.systemalpha.*.xml \
+                        target/surefire-reports/TEST-com.payment.integration.*.xml; do
+            [ -e "$report" ] || { echo "HATA: Rapor bulunamadi: $report"; exit 1; }
+            if grep -q 'skipped="[1-9]' "$report"; then
+              echo "HATA: $report icinde skip edilen test var (Docker gating yanlis tetiklenmis olabilir)."
+              exit 1
+            fi
+            if grep -q 'tests="0"' "$report"; then
+              echo "HATA: $report icinde hic test kosmamis."
+              exit 1
+            fi
+          done
+          echo "Tum Testcontainers / integration testleri gercekten calisti."
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: payment-service-test-results
+          path: payment/target/surefire-reports/**/*.xml
+          retention-days: 7
+
+      - name: Upload build artifact (jar)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: payment-service-jar
+          path: payment/target/*.jar
+          retention-days: 7
