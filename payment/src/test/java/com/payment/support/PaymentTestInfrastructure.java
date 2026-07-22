@@ -28,24 +28,31 @@ public final class PaymentTestInfrastructure {
     public static final ElasticsearchContainer ELASTICSEARCH;
 
     static {
+        // PostgreSQL Container
         POSTGRES = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"))
                 .withDatabaseName("payment_db_test")
                 .withUsername("test")
                 .withPassword("test");
 
+        // RabbitMQ Container
         RABBITMQ = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3.13-management"));
 
+        // Elasticsearch Container
         ELASTICSEARCH = new ElasticsearchContainer(
                 DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.15.0"))
                 .withEnv("xpack.security.enabled", "false")
                 .withEnv("discovery.type", "single-node")
                 .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
 
+        // Tüm container'ları başlat
         POSTGRES.start();
         RABBITMQ.start();
         ELASTICSEARCH.start();
     }
 
+    /**
+     * Spring Data Elasticsearch için URI döndürür.
+     */
     public static String elasticsearchUri() {
         return "http://" + ELASTICSEARCH.getHttpHostAddress().replace("http://", "");
     }
