@@ -11,6 +11,7 @@ on:
     paths:
       - 'cart/**'
       - '.github/workflows/cart-ci.yml'
+  workflow_dispatch: # <-- BU SATIRI EKLEDİK (Manuel tetikleme için)
 
 defaults:
   run:
