@@ -17,6 +17,13 @@
 -- byte dizisini) gorur. Bu yuzden bu iki alana format/kontrol karakteri dogrulamasi
 -- eklenMEDI: sifreli veri uzerinde boyle bir kontrol anlamsizdir ve rastgele
 -- sifreleme ciktisina bagli olarak sahte pozitif uretebilirdi.
+--
+-- NOT (statement separator): bu dosya cift noktali virgul ayiricisiyla parcalaniyor (bkz.
+-- application-dev.yaml/application-prod.yaml -> spring.sql.init.separator).
+-- Spring'in varsayilan tek ';' ayiricisi, $$ dolar-quote fonksiyon govdesi icindeki
+-- sıradan ';' karakterlerini de YANLISLIKLA ayirici sanip script'i ortadan boler.
+-- Fonksiyon govdesi icindeki TEK ';' karakterlerine DOKUNULMADI - yalnizca en
+-- disaridaki (top-level) her ifadenin sonuna ikinci bir ';' eklendi.
 
 -- ------------------------------------------------------------------
 -- 1) users: role_name yalnizca bilinen rollerden biri olabilir (yetki yukseltme
@@ -32,12 +39,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_auth_validate_users ON users;
+DROP TRIGGER IF EXISTS trg_auth_validate_users ON users;;
 CREATE TRIGGER trg_auth_validate_users
     BEFORE INSERT OR UPDATE ON users
-    FOR EACH ROW EXECUTE FUNCTION fn_auth_validate_users();
+    FOR EACH ROW EXECUTE FUNCTION fn_auth_validate_users();;
 
 -- ------------------------------------------------------------------
 -- 2) customers: loyalty_points negatif olamaz
@@ -49,12 +56,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_auth_validate_customers ON customers;
+DROP TRIGGER IF EXISTS trg_auth_validate_customers ON customers;;
 CREATE TRIGGER trg_auth_validate_customers
     BEFORE INSERT OR UPDATE ON customers
-    FOR EACH ROW EXECUTE FUNCTION fn_auth_validate_customers();
+    FOR EACH ROW EXECUTE FUNCTION fn_auth_validate_customers();;
 
 -- ------------------------------------------------------------------
 -- 3) outbox_event: payload GECERLI JSON olmak zorunda (OutboxAdapter'daki
@@ -79,9 +86,9 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_auth_validate_outbox ON outbox_event;
+DROP TRIGGER IF EXISTS trg_auth_validate_outbox ON outbox_event;;
 CREATE TRIGGER trg_auth_validate_outbox
     BEFORE INSERT OR UPDATE ON outbox_event
-    FOR EACH ROW EXECUTE FUNCTION fn_auth_validate_outbox();
+    FOR EACH ROW EXECUTE FUNCTION fn_auth_validate_outbox();;

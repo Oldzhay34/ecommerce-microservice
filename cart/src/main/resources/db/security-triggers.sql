@@ -9,6 +9,13 @@
 -- Bu dosya spring.sql.init.mode=always ile HER baslangicta yeniden calisir; bu yuzden
 -- tum tanimlar idempotent olmalidir (CREATE OR REPLACE FUNCTION / DROP TRIGGER IF
 -- EXISTS + CREATE TRIGGER).
+--
+-- NOT (statement separator): bu dosya cift noktali virgul ayiricisiyla parcalaniyor (bkz.
+-- application.yaml -> spring.sql.init.separator). Spring'in varsayilan tek ';'
+-- ayiricisi, $$ dolar-quote fonksiyon govdesi icindeki sıradan ';' karakterlerini de
+-- YANLISLIKLA ayirici sanip script'i ortadan boler. Fonksiyon govdesi icindeki TEK ';'
+-- karakterlerine DOKUNULMADI - yalnizca en disaridaki (top-level) her ifadenin sonuna
+-- ikinci bir ';' eklendi.
 
 -- ------------------------------------------------------------------
 -- 1) carts: total_amount negatif olamaz (0 gecerlidir - bos sepet); user_id
@@ -24,12 +31,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_cart_validate_carts ON carts;
+DROP TRIGGER IF EXISTS trg_cart_validate_carts ON carts;;
 CREATE TRIGGER trg_cart_validate_carts
     BEFORE INSERT OR UPDATE ON carts
-    FOR EACH ROW EXECUTE FUNCTION fn_cart_validate_carts();
+    FOR EACH ROW EXECUTE FUNCTION fn_cart_validate_carts();;
 
 -- ------------------------------------------------------------------
 -- 2) cart_items: quantity pozitif, price negatif olamaz; hangi sepete/urune ait
@@ -53,12 +60,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_cart_validate_cart_items ON cart_items;
+DROP TRIGGER IF EXISTS trg_cart_validate_cart_items ON cart_items;;
 CREATE TRIGGER trg_cart_validate_cart_items
     BEFORE INSERT OR UPDATE ON cart_items
-    FOR EACH ROW EXECUTE FUNCTION fn_cart_validate_cart_items();
+    FOR EACH ROW EXECUTE FUNCTION fn_cart_validate_cart_items();;
 
 -- ------------------------------------------------------------------
 -- 3) outbox_event: payload gecerli JSON olmali
@@ -72,9 +79,9 @@ BEGIN
     END;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_cart_validate_outbox ON outbox_event;
+DROP TRIGGER IF EXISTS trg_cart_validate_outbox ON outbox_event;;
 CREATE TRIGGER trg_cart_validate_outbox
     BEFORE INSERT OR UPDATE ON outbox_event
-    FOR EACH ROW EXECUTE FUNCTION fn_cart_validate_outbox();
+    FOR EACH ROW EXECUTE FUNCTION fn_cart_validate_outbox();;

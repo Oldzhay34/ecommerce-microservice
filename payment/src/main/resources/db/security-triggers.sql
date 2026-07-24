@@ -10,6 +10,13 @@
 -- Bu dosya spring.sql.init.mode=always ile HER baslangicta yeniden calisir; bu yuzden
 -- tum tanimlar idempotent olmalidir (CREATE OR REPLACE FUNCTION / DROP TRIGGER IF
 -- EXISTS + CREATE TRIGGER).
+--
+-- NOT (statement separator): bu dosya cift noktali virgul ayiricisiyla parcalaniyor (bkz.
+-- application.yaml -> spring.sql.init.separator). Spring'in varsayilan tek ';'
+-- ayiricisi, $$ dolar-quote fonksiyon govdesi icindeki sıradan ';' karakterlerini de
+-- YANLISLIKLA ayirici sanip script'i ortadan boler. Fonksiyon govdesi icindeki TEK ';'
+-- karakterlerine DOKUNULMADI - yalnizca en disaridaki (top-level) her ifadenin sonuna
+-- ikinci bir ';' eklendi.
 
 -- ------------------------------------------------------------------
 -- 1) payments: amount pozitif olmali; PENDING'den cikildiktan sonra order_id/
@@ -35,12 +42,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_payment_validate_payments ON payments;
+DROP TRIGGER IF EXISTS trg_payment_validate_payments ON payments;;
 CREATE TRIGGER trg_payment_validate_payments
     BEFORE INSERT OR UPDATE ON payments
-    FOR EACH ROW EXECUTE FUNCTION fn_payment_validate_payments();
+    FOR EACH ROW EXECUTE FUNCTION fn_payment_validate_payments();;
 
 -- ------------------------------------------------------------------
 -- 2) outbox_event: payload gecerli JSON olmali
@@ -54,9 +61,9 @@ BEGIN
     END;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_payment_validate_outbox ON outbox_event;
+DROP TRIGGER IF EXISTS trg_payment_validate_outbox ON outbox_event;;
 CREATE TRIGGER trg_payment_validate_outbox
     BEFORE INSERT OR UPDATE ON outbox_event
-    FOR EACH ROW EXECUTE FUNCTION fn_payment_validate_outbox();
+    FOR EACH ROW EXECUTE FUNCTION fn_payment_validate_outbox();;

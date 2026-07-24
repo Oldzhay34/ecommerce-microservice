@@ -15,6 +15,9 @@ spring:
     init:
       mode: always
       schema-locations: classpath:db/security-triggers.sql
+      # security-triggers.sql $$ dolar-quote fonksiyon govdeleri icerir; varsayilan
+      # tek ';' ayiricisi govde icindeki ';' karakterlerinde de bolerdi.
+      separator: ";;"
   data:
     redis:
       host: ${REDIS_HOST}

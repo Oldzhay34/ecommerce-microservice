@@ -15,6 +15,13 @@
 --
 -- NOT: products/reviews tablolarindaki serbest metin alanlarina (name, comment vb.)
 -- HICBIR kisitlama eklenmemistir - masum kullanici girdisini etkilememesi icin.
+--
+-- NOT (statement separator): bu dosya cift noktali virgul ayiricisiyla parcalaniyor (bkz.
+-- application.yaml -> spring.sql.init.separator). Spring'in varsayilan tek ';'
+-- ayiricisi, $$ dolar-quote fonksiyon govdesi icindeki sıradan ';' karakterlerini de
+-- YANLISLIKLA ayirici sanip script'i ortadan boler. Fonksiyon govdesi icindeki TEK ';'
+-- karakterlerine DOKUNULMADI - yalnizca en disaridaki (top-level) her ifadenin sonuna
+-- ikinci bir ';' eklendi.
 
 -- ------------------------------------------------------------------
 -- 1) products: price/stock negatif olamaz, id/store_id olusturulduktan sonra
@@ -38,12 +45,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_product_validate_products ON products;
+DROP TRIGGER IF EXISTS trg_product_validate_products ON products;;
 CREATE TRIGGER trg_product_validate_products
     BEFORE INSERT OR UPDATE ON products
-    FOR EACH ROW EXECUTE FUNCTION fn_product_validate_products();
+    FOR EACH ROW EXECUTE FUNCTION fn_product_validate_products();;
 
 -- ------------------------------------------------------------------
 -- 2) reviews (product-service'in kendi kopyasi): rating 1-5 araliginda olmali,
@@ -64,12 +71,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_product_validate_reviews ON reviews;
+DROP TRIGGER IF EXISTS trg_product_validate_reviews ON reviews;;
 CREATE TRIGGER trg_product_validate_reviews
     BEFORE INSERT OR UPDATE ON reviews
-    FOR EACH ROW EXECUTE FUNCTION fn_product_validate_reviews();
+    FOR EACH ROW EXECUTE FUNCTION fn_product_validate_reviews();;
 
 -- ------------------------------------------------------------------
 -- NOT: outbox_event.payload zaten "jsonb" tipinde tanimli (bkz. OutboxJpaEvent) -

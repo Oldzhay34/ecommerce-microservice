@@ -14,6 +14,13 @@
 -- NOT: comment/store_reply_text serbest metin alanlarina HICBIR kisitlama
 -- eklenmemistir (masum kullanici girdisini etkilememesi icin); yalnizca uzunluk
 -- zaten @Column(length=1000) ile Hibernate tarafinda VARCHAR(1000) olarak siniirli.
+--
+-- NOT (statement separator): bu dosya cift noktali virgul ayiricisiyla parcalaniyor (bkz.
+-- application.yaml -> spring.sql.init.separator). Spring'in varsayilan tek ';'
+-- ayiricisi, $$ dolar-quote fonksiyon govdesi icindeki sıradan ';' karakterlerini de
+-- YANLISLIKLA ayirici sanip script'i ortadan boler. Fonksiyon govdesi icindeki TEK ';'
+-- karakterlerine DOKUNULMADI - yalnizca en disaridaki (top-level) her ifadenin sonuna
+-- ikinci bir ';' eklendi.
 
 -- ------------------------------------------------------------------
 -- 1) reviews: rating 1-5 araliginda olmali; hangi urune/musteriye ait oldugu ve
@@ -37,12 +44,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_review_validate_reviews ON reviews;
+DROP TRIGGER IF EXISTS trg_review_validate_reviews ON reviews;;
 CREATE TRIGGER trg_review_validate_reviews
     BEFORE INSERT OR UPDATE ON reviews
-    FOR EACH ROW EXECUTE FUNCTION fn_review_validate_reviews();
+    FOR EACH ROW EXECUTE FUNCTION fn_review_validate_reviews();;
 
 -- ------------------------------------------------------------------
 -- 2) purchase_eligibility: hangi siparise/musteriye/urune ait oldugu degistirilemez
@@ -60,12 +67,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_review_validate_purchase_eligibility ON purchase_eligibility;
+DROP TRIGGER IF EXISTS trg_review_validate_purchase_eligibility ON purchase_eligibility;;
 CREATE TRIGGER trg_review_validate_purchase_eligibility
     BEFORE UPDATE ON purchase_eligibility
-    FOR EACH ROW EXECUTE FUNCTION fn_review_validate_purchase_eligibility();
+    FOR EACH ROW EXECUTE FUNCTION fn_review_validate_purchase_eligibility();;
 
 -- ------------------------------------------------------------------
 -- 3) outbox_event: payload gecerli JSON olmali
@@ -79,9 +86,9 @@ BEGIN
     END;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_review_validate_outbox ON outbox_event;
+DROP TRIGGER IF EXISTS trg_review_validate_outbox ON outbox_event;;
 CREATE TRIGGER trg_review_validate_outbox
     BEFORE INSERT OR UPDATE ON outbox_event
-    FOR EACH ROW EXECUTE FUNCTION fn_review_validate_outbox();
+    FOR EACH ROW EXECUTE FUNCTION fn_review_validate_outbox();;

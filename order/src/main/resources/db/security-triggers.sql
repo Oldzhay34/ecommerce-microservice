@@ -13,6 +13,13 @@
 -- NOT: bu servis ayrica spring-modulith-events-jpa kullaniyor (kendi ic
 -- event_publication tablosunu yonetir) - o tabloya KASITLI OLARAK dokunulmadi,
 -- framework'un kendi yasam dongusunu bozma riski tasir.
+--
+-- NOT (statement separator): bu dosya cift noktali virgul ayiricisiyla parcalaniyor (bkz.
+-- application.yaml -> spring.sql.init.separator). Spring'in varsayilan tek ';'
+-- ayiricisi, $$ dolar-quote fonksiyon govdesi icindeki sıradan ';' karakterlerini de
+-- YANLISLIKLA ayirici sanip script'i ortadan boler. Fonksiyon govdesi icindeki TEK ';'
+-- karakterlerine DOKUNULMADI - yalnizca en disaridaki (top-level) her ifadenin sonuna
+-- ikinci bir ';' eklendi.
 
 -- ------------------------------------------------------------------
 -- 1) orders: total_amount negatif olamaz, id/user_id degistirilemez, CANCELLED
@@ -36,12 +43,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_order_validate_orders ON orders;
+DROP TRIGGER IF EXISTS trg_order_validate_orders ON orders;;
 CREATE TRIGGER trg_order_validate_orders
     BEFORE INSERT OR UPDATE ON orders
-    FOR EACH ROW EXECUTE FUNCTION fn_order_validate_orders();
+    FOR EACH ROW EXECUTE FUNCTION fn_order_validate_orders();;
 
 -- ------------------------------------------------------------------
 -- 2) order_items: quantity pozitif, price negatif olamaz; hangi siparise/urune ait
@@ -65,12 +72,12 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_order_validate_order_items ON order_items;
+DROP TRIGGER IF EXISTS trg_order_validate_order_items ON order_items;;
 CREATE TRIGGER trg_order_validate_order_items
     BEFORE INSERT OR UPDATE ON order_items
-    FOR EACH ROW EXECUTE FUNCTION fn_order_validate_order_items();
+    FOR EACH ROW EXECUTE FUNCTION fn_order_validate_order_items();;
 
 -- ------------------------------------------------------------------
 -- 3) outbox_event: payload gecerli JSON olmali; processed=true satirlarin
@@ -95,9 +102,9 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;;
 
-DROP TRIGGER IF EXISTS trg_order_validate_outbox ON outbox_event;
+DROP TRIGGER IF EXISTS trg_order_validate_outbox ON outbox_event;;
 CREATE TRIGGER trg_order_validate_outbox
     BEFORE INSERT OR UPDATE ON outbox_event
-    FOR EACH ROW EXECUTE FUNCTION fn_order_validate_outbox();
+    FOR EACH ROW EXECUTE FUNCTION fn_order_validate_outbox();;

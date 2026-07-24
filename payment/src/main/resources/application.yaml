@@ -19,6 +19,9 @@ spring:
     init:
       mode: always
       schema-locations: classpath:db/security-triggers.sql
+      # security-triggers.sql $$ dolar-quote fonksiyon govdeleri icerir; varsayilan
+      # tek ';' ayiricisi govde icindeki ';' karakterlerinde de bolerdi.
+      separator: ";;"
   elasticsearch:
     uris: ${ES_URIS:http://localhost:9200}
   rabbitmq:
