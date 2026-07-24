@@ -9,6 +9,16 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  autoconfigure:
+    exclude:
+      # spring-modulith-events-amqp classpath'te hem Jackson 2 (com.fasterxml.jackson,
+      # jjwt-jackson + uygulama kodu bunu kullanir) hem Jackson 3 (tools.jackson,
+      # spring-data-elasticsearch/co.elastic.clients bunu gerektirir) gorunce IKI
+      # ayri auto-configuration ile ayni 'rabbitTemplateCustomizer' bean'ini kaydediyor
+      # (RabbitJackson2Configuration + RabbitJacksonConfiguration) ve context patliyor.
+      # Jackson 3 tabanli olani disarida birakiyoruz; Jackson 2 tabanli olan aktif kalir.
+      - org.springframework.modulith.events.amqp.RabbitJacksonConfiguration
+
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:orderdb}
     username: ${DB_USER:postgres}
