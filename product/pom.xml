@@ -114,6 +114,17 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
         </dependency>
+        <!-- Boot 4'un varsayilan web starter'i Jackson 3'e (tools.jackson) kaydigi icin
+             klasik Jackson 2 (com.fasterxml.jackson.databind.ObjectMapper) java.time
+             desteğini artik OTOMATIK GETIRMIYOR. OrderCreatedListener gibi siniflar
+             hala Jackson 2 ObjectMapper kullaniyor ve LocalDateTime alanlarini
+             (OrderCreatedEventPayload.createdAt) deserilestirmek icin bu modul
+             GEREKLI - eksikligi CI'da "Java 8 date/time type not supported" hatasi
+             uretiyordu. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.springframework.cloud</groupId>
             <artifactId>spring-cloud-starter-gateway-server-webmvc</artifactId>
