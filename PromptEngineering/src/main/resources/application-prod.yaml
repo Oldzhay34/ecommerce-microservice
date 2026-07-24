@@ -10,6 +10,11 @@ spring:
     hibernate:
       ddl-auto: none
     show-sql: false
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/security-triggers.sql
   data:
     redis:
       host: ${REDIS_HOST}

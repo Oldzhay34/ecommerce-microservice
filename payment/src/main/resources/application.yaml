@@ -12,6 +12,13 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: false
+    # Hibernate once tabloları oluşturur/günceller, SONRA güvenlik trigger'ları
+    # yazılır (aksi halde trigger script'i henüz var olmayan tablolara başvururdu).
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/security-triggers.sql
   elasticsearch:
     uris: ${ES_URIS:http://localhost:9200}
   rabbitmq:

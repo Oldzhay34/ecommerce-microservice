@@ -15,6 +15,13 @@ spring:
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: false
 
+  sql:
+    init:
+      # Guvenlik trigger script'i (db/security-triggers.sql) SAF PostgreSQL PL/pgSQL'dir
+      # (CREATE FUNCTION ... LANGUAGE plpgsql, ::jsonb) - H2'de calismaz. Test profili
+      # H2 kullandigi icin base application.yaml'daki "always" burada iptal edilir.
+      mode: never
+
   # Dummy bağlantı bilgileri (auto-config patlamasın diye)
   rabbitmq:
     host: localhost

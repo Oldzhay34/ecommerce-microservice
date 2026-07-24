@@ -40,7 +40,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 @TestPropertySource(properties = {
         "app.security.aes-secret=12345678901234567890123456789012",
         "spring.jpa.hibernate.ddl-auto=create-drop",
-        "spring.datasource.url=jdbc:h2:mem:authtestdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL"
+        "spring.datasource.url=jdbc:h2:mem:authtestdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL",
+        // db/security-triggers.sql SAF PostgreSQL PL/pgSQL'dir (CREATE FUNCTION ...
+        // LANGUAGE plpgsql, ::jsonb) - H2'de calismaz. Bu test H2'ye gectigi icin
+        // application-dev.yaml'daki "always" burada iptal edilir.
+        "spring.sql.init.mode=never"
 })
 @DisplayName("UserPersistenceAdapter Integration Tests (H2)")
 class UserPersistenceAdapterTest {

@@ -22,6 +22,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    # Hibernate once tablolari olusturur/gunceller, SONRA guvenlik trigger'lari
+    # yazilir (aksi halde trigger script'i henuz var olmayan tablolara basvururdu).
+    defer-datasource-initialization: true
+
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/security-triggers.sql
 
   data:
     redis:
