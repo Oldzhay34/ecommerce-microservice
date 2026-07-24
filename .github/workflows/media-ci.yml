@@ -1,0 +1,101 @@
+name: Media Service CI
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'media-service/**'
+      - '.github/workflows/media-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'media-service/**'
+      - '.github/workflows/media-ci.yml'
+  workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: media-service
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # media-service/pom.xml java.version=21 istiyor (Spring Boot 3.3.5).
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Grant execute permission for mvnw
+        run: chmod +x mvnw
+        continue-on-error: true
+
+      # subsystem + system + alpha + MediaServiceApplicationTests Testcontainers kullanir
+      # ve Docker yoksa @EnabledIf ile SESSIZCE SKIP edilir. Bu adim, runner'da Docker
+      # gercekten yoksa build'i burada kirar; boylece CI "yesil ama hicbir sey
+      # kosmamis" duruma dusemez.
+      - name: Verify Docker is available (Testcontainers on kosulu)
+        run: docker info
+
+      - name: Build and run tests (Maven)
+        run: mvn -B clean verify
+        # Katmanlar:
+        #   com.mediaservice.unit.*        -> saf Mockito, altyapi gerektirmez
+        #   com.mediaservice.integration.* -> @WebMvcTest + gercek Spring Security filtre
+        #                                     zinciri
+        #   com.mediaservice.module.*      -> ArchUnit ile hexagonal mimari + SOLID
+        #                                     sinir kurallari (build-time koruma)
+        #   com.mediaservice.subsystem.*   -> Testcontainers (Postgres + RabbitMQ + Redis
+        #                                     + MinIO), product.deleted cross-service
+        #                                     simulasyonu dahil
+        #   com.mediaservice.system.*      -> tam stack, tek ozellikli black-box HTTP testleri
+        #   com.mediaservice.alpha.*       -> tam stack, uctan uca tek yolculuk senaryosu
+        #
+        # NOT: subsystem/system/alpha katmanlari Docker gerektirir; ubuntu-latest
+        # runner'da Docker kurulu oldugu icin ekstra bir service tanimina gerek yoktur.
+
+      # Container gerektiren testlerin CI'da GERCEKTEN kostugunu dogrula: raporlar
+      # var olmali, skipped sayisi 0 olmali ve tests sayisi 0'dan buyuk olmali.
+      - name: Assert Testcontainers tests were not skipped
+        if: always()
+        run: |
+          set -e
+          for report in target/surefire-reports/TEST-com.mediaservice.MediaServiceApplicationTests.xml \
+                        target/surefire-reports/TEST-com.mediaservice.subsystem.*.xml \
+                        target/surefire-reports/TEST-com.mediaservice.system.*.xml \
+                        target/surefire-reports/TEST-com.mediaservice.alpha.*.xml; do
+            [ -e "$report" ] || { echo "HATA: Rapor bulunamadi: $report"; exit 1; }
+            if grep -q 'skipped="[1-9]' "$report"; then
+              echo "HATA: $report icinde skip edilen test var (Docker gating yanlis tetiklenmis olabilir)."
+              exit 1
+            fi
+            if grep -q 'tests="0"' "$report"; then
+              echo "HATA: $report icinde hic test kosmamis."
+              exit 1
+            fi
+          done
+          echo "Tum Testcontainers / subsystem / system / alpha testleri gercekten calisti."
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-service-test-results
+          path: media-service/target/surefire-reports/**/*.xml
+          retention-days: 7
+
+      - name: Upload build artifact (jar)
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: media-service-jar
+          path: media-service/target/*.jar
+          retention-days: 7
