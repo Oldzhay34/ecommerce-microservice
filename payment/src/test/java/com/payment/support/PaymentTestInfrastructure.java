@@ -37,9 +37,12 @@ public final class PaymentTestInfrastructure {
         // RabbitMQ Container
         RABBITMQ = new RabbitMQContainer(DockerImageName.parse("rabbitmq:3.13-management"));
 
-        // Elasticsearch Container (Sürüm 8.13.4 olarak güncellendi)
+        // Elasticsearch Container: co.elastic.clients:elasticsearch-java 9.4.2 ile
+        // uyumlu olmasi icin prod altyapisiyla (ecommerce-infra/compose.yml) ayni
+        // surume sabitlendi. Client 9.x, server 8.x'e karsi uyumsuz compatibility
+        // header'lari gonderiyor ve "indices.exists" HEAD istekleri 400 ile patliyordu.
         ELASTICSEARCH = new ElasticsearchContainer(
-                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:8.13.4"))
+                DockerImageName.parse("docker.elastic.co/elasticsearch/elasticsearch:9.4.2"))
                 .withEnv("xpack.security.enabled", "false")
                 .withEnv("discovery.type", "single-node")
                 .withEnv("ES_JAVA_OPTS", "-Xms512m -Xmx512m");
