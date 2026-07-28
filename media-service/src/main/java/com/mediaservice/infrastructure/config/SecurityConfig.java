@@ -42,7 +42,7 @@ public class SecurityConfig {
                         // Public: urun detay/liste ekrani token'siz calisir
                         .requestMatchers(HttpMethod.GET, "/api/v1/media/products/*/images").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/media/products/images/batch").permitAll()
-                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/actuator/prometheus", "/actuator/metrics").permitAll()
                         // Korumali: rol bazli
                         .requestMatchers(HttpMethod.POST, "/api/v1/media/products/*/images")
                         .hasRole("STORE")

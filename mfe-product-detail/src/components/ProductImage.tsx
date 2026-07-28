@@ -27,9 +27,9 @@ export function ProductImage({ src, alt }: ProductImageProps) {
             style={{
                 width: '100%',
                 aspectRatio: '1 / 1',
-                backgroundColor: '#F3F4F6',
+                backgroundColor: '#F7F8FA',
                 border: '1px solid #E5E7EB',
-                borderRadius: 12,
+                borderRadius: 16,
                 overflow: 'hidden',
                 position: 'relative',
             }}

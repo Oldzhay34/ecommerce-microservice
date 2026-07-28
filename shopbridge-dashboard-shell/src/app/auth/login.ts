@@ -35,6 +35,6 @@ export function applyLogin(res: LoginResponse): { redirectTo: string } {
         role,
     });
 
-    const redirectTo = role === 'STORE' ? '/storedashboard' : '/';
+    const redirectTo = role === 'STORE' ? '/storedashboard' : '/dashboard';
     return { redirectTo };
 }

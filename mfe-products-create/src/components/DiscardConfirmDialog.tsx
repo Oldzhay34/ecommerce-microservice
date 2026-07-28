@@ -18,7 +18,7 @@ export function DiscardConfirmDialog({
             onClick={onCancel}
         >
             <div
-                className="bg-white border border-line rounded-card w-full max-w-md p-6"
+                className="bg-surface-raised border border-border-strong shadow-sb-lg rounded-card w-full max-w-md p-6"
                 onClick={(e) => e.stopPropagation()}
             >
                 <h3 id="discard-title" className="text-ink text-base font-semibold">
@@ -29,14 +29,14 @@ export function DiscardConfirmDialog({
                     <button
                         type="button"
                         onClick={onCancel}
-                        className="h-10 rounded-btn font-semibold bg-white border border-line-strong text-ink px-4"
+                        className="h-10 rounded-btn font-semibold bg-surface border border-border-strong text-ink px-4 hover:bg-surface-hover"
                     >
                         Vazgeç
                     </button>
                     <button
                         type="button"
                         onClick={onConfirm}
-                        className="h-10 rounded-btn font-semibold bg-err-tx text-white px-4"
+                        className="h-10 rounded-btn font-semibold bg-danger text-white px-4 hover:brightness-110"
                     >
                         Çık
                     </button>

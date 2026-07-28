@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { applyLogin } from '../app/auth/login';
 import { useSessionStore } from '../app/session/store';
+import { Logo } from './Logo';
 
 /**
  * Login projesi kullanıcıyı http://localhost:3001/?token=xxx adresine atar.
@@ -11,7 +12,7 @@ import { useSessionStore } from '../app/session/store';
 export function TokenCatcher() {
     const [searchParams, setSearchParams] = useSearchParams();
     const navigate = useNavigate();
-    const authToken = useSessionStore((s) => s.authToken);
+    const { authToken, role } = useSessionStore();
 
     useEffect(() => {
         const token = searchParams.get('token');
@@ -24,20 +25,39 @@ export function TokenCatcher() {
         }
     }, [searchParams, setSearchParams, navigate]);
 
-    // Token yoksa ama session zaten varsa (yenileme sonrası) dashboard'a
+    // Token yoksa ama session zaten varsa (yenileme sonrası) role'e göre dashboard'a
     useEffect(() => {
         if (!searchParams.get('token') && authToken) {
-            navigate('/storedashboard', { replace: true });
+            navigate(role === 'STORE' ? '/storedashboard' : '/dashboard', { replace: true });
         }
-    }, [authToken, navigate, searchParams]);
+    }, [authToken, role, navigate, searchParams]);
+
+    const hasToken = Boolean(searchParams.get('token'));
+    if (!hasToken && !authToken) {
+        const loginUrl = import.meta.env.VITE_AUTH_APP_URL ?? 'http://localhost:3000';
+        return (
+            <div className="min-h-screen bg-canvas flex flex-col items-center justify-center gap-5 px-6 text-center">
+                <Logo size={26} />
+                <p className="text-ink-muted text-sm max-w-sm">
+                    Devam etmek için oturum açmanız gerekiyor.
+                </p>
+                <a
+                    href={loginUrl}
+                    className="inline-flex items-center justify-center h-10 px-6 rounded-full bg-brand text-white text-sm font-semibold hover:bg-brand-hover transition-colors"
+                >
+                    Giriş Yap
+                </a>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ maxWidth: 1120, margin: '0 auto', padding: 24 }}>
-            <div style={{ fontWeight: 800, fontSize: 22 }}>
-                <span style={{ color: '#000' }}>Shop</span>
-                <span style={{ color: '#1D4ED8' }}>Bridge</span>
+        <div className="min-h-screen bg-canvas flex flex-col items-center justify-center gap-4">
+            <Logo size={26} />
+            <div className="flex items-center gap-2 text-ink-muted text-sm">
+                <span className="h-3.5 w-3.5 rounded-full border-2 border-border-strong border-t-brand animate-spin" />
+                Oturum hazırlanıyor…
             </div>
-            <p style={{ color: '#6B7280', marginTop: 12 }}>Oturum hazırlanıyor…</p>
         </div>
     );
 }

@@ -10,20 +10,20 @@ export const TopBar: React.FC = () => {
     };
 
     return (
-        <header className="sticky top-0 z-40 h-16 w-full bg-white border-b border-[#E5E7EB] px-6 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-        <span className="text-xl font-bold tracking-tight">
-          <span style={{ color: '#000000' }}>Shop</span>
-          <span style={{ color: '#1D4ED8' }}>Bridge</span>
+        <header className="sticky top-0 z-40 h-[72px] w-full bg-canvas/90 backdrop-blur-xl shadow-[0_1px_0_rgba(15,15,15,0.06)] px-6 md:px-8 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+        <span className="text-xl font-extrabold tracking-tight">
+          <span className="text-ink-primary">Shop</span>
+          <span className="text-brand">Bridge</span>
         </span>
-                <span className="text-xs text-[#6B7280] font-semibold uppercase tracking-wider bg-gray-100 px-2.5 py-1 rounded">
+                <span className="text-xs text-ink-secondary font-semibold uppercase tracking-wider bg-surface-hover px-2.5 py-1 rounded-full">
           Yönetim Paneli
         </span>
             </div>
             <div>
                 <button
                     onClick={handleLogout}
-                    className="h-10 px-4 rounded-lg bg-white border border-[#D1D5DB] text-[#111827] text-sm font-semibold hover:bg-gray-50 transition-colors"
+                    className="h-10 px-5 rounded-full text-ink-primary text-sm font-medium hover:bg-surface-hover active:scale-[0.97] transition-all duration-150"
                 >
                     Çıkış Yap
                 </button>

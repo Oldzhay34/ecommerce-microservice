@@ -44,7 +44,7 @@ export function StockUpdateModal({
             role="dialog"
             aria-modal="true"
         >
-            <div className="bg-white border border-line rounded-card w-full max-w-md p-6">
+            <div className="bg-surface border border-line rounded-card w-full max-w-md p-6 shadow-sb-lg">
                 <h3 className="text-ink text-lg font-bold">
                     Stok Güncelle — {product.name}
                 </h3>
@@ -75,14 +75,14 @@ export function StockUpdateModal({
                             type="button"
                             onClick={onClose}
                             disabled={isPending}
-                            className="h-10 rounded-btn font-semibold bg-white border border-line-strong text-ink px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-10 rounded-btn font-semibold bg-surface hover:bg-surface-hover border border-line-strong text-ink px-4 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Vazgeç
                         </button>
                         <button
                             type="submit"
                             disabled={isPending}
-                            className="h-10 rounded-btn font-semibold bg-brand text-white px-4 hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                            className="h-10 rounded-full font-semibold bg-brand text-white px-4 hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                         >
                             {isPending && (
                                 <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

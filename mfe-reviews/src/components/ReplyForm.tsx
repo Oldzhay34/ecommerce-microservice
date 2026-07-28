@@ -31,7 +31,7 @@ export function ReplyForm({
         <textarea
     {...register('reply')}
     rows={3}
-    className="w-full rounded-btn border border-line-strong px-3 py-2 text-ink outline-none focus:border-brand resize-y"
+    className="w-full rounded-btn border border-line-strong px-3 py-2 text-ink bg-surface outline-none focus:border-brand resize-y"
     />
     <p className="text-muted text-xs mt-1">
         Müşteriye kibar ve çözüm odaklı bir yanıt yazın.
@@ -43,7 +43,7 @@ export function ReplyForm({
         <button
             type="submit"
             disabled={isPending}
-            className="h-10 rounded-btn font-semibold bg-brand text-white px-4 hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+            className="h-10 rounded-full font-semibold bg-brand text-white px-4 hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                 >
                 {isPending && (
                     <span className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />

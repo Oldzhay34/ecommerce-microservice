@@ -38,7 +38,7 @@ export function ProductInfoPanel({
                 style={{
                     fontSize: 28,
                     fontWeight: 700,
-                    color: '#111827',
+                    color: '#F2F2F5',
                     lineHeight: 1.25,
                     wordBreak: 'break-word',
                     margin: 0,
@@ -49,7 +49,7 @@ export function ProductInfoPanel({
             <div style={{ height: 16 }} />
 
             {/* 3 — Fiyat */}
-            <div style={{ fontSize: 32, fontWeight: 700, color: '#111827' }}>
+            <div style={{ fontSize: 32, fontWeight: 700, color: '#F2F2F5' }}>
                 {formatTRY(product.price)}
             </div>
             <div style={{ height: 16 }} />
@@ -59,7 +59,7 @@ export function ProductInfoPanel({
             <div style={{ height: 24 }} />
 
             {/* 5 — Ayırıcı */}
-            <div style={{ height: 1, backgroundColor: '#E5E7EB', width: '100%' }} />
+            <div style={{ height: 1, backgroundColor: '#232329', width: '100%' }} />
             <div style={{ height: 24 }} />
 
             {/* 6 — Adet seçici */}
@@ -89,7 +89,7 @@ export function ProductInfoPanel({
                 fontSize: 11,
                 letterSpacing: '0.06em',
                 fontWeight: 600,
-                color: '#9CA3AF',
+                color: '#6C6C78',
             }}
         >
           Ürün No
@@ -99,7 +99,7 @@ export function ProductInfoPanel({
                     style={{
                         fontFamily: 'ui-monospace, monospace',
                         fontSize: 12,
-                        color: '#6B7280',
+                        color: '#9C9CA8',
                     }}
                 >
           {shortId(product.id)}

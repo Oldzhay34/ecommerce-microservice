@@ -18,14 +18,14 @@ const ProductReviews = lazy(() => import('mfe_reviews/ProductReviews'));
 const GalleryFallback = () => (
     <div
         className="animate-pulse"
-        style={{ width: '100%', aspectRatio: '1/1', backgroundColor: '#F3F4F6', borderRadius: 12 }}
+        style={{ width: '100%', aspectRatio: '1/1', backgroundColor: '#131317', borderRadius: 16 }}
     />
 );
 
 const ReviewsFallback = () => (
     <div
         className="animate-pulse"
-        style={{ width: '100%', height: 192, backgroundColor: '#F3F4F6', borderRadius: 12, marginTop: 24 }}
+        style={{ width: '100%', height: 192, backgroundColor: '#131317', borderRadius: 16, marginTop: 24 }}
     />
 );
 
@@ -104,11 +104,11 @@ function ProductDetailContent({ productId, onNavigate }: ProductDetailContentPro
         <button
             type="button"
             onClick={handleBack}
-            className="hover:!text-[#111827]"
+            className="hover:!text-ink"
             style={{
                 fontSize: 14,
                 fontWeight: 600,
-                color: '#6B7280',
+                color: '#9C9CA8',
                 background: 'transparent',
                 border: 'none',
                 padding: 0,
@@ -120,10 +120,11 @@ function ProductDetailContent({ productId, onNavigate }: ProductDetailContentPro
     );
 
     const cardStyle: React.CSSProperties = {
-        backgroundColor: '#FFFFFF',
-        border: '1px solid #E5E7EB',
-        borderRadius: 12,
+        backgroundColor: '#131317',
+        border: '1px solid #232329',
+        borderRadius: 16,
         padding: '24px 28px',
+        boxShadow: '0 1px 2px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.03)',
     };
 
     return (
@@ -165,16 +166,16 @@ function ProductDetailContent({ productId, onNavigate }: ProductDetailContentPro
                             onClick={() => {
                                 void query.refetch();
                             }}
-                            className="hover:bg-[#F9FAFB]"
+                            className="hover:bg-surface-hover"
                             style={{
                                 height: 32,
-                                borderRadius: 8,
+                                borderRadius: 10,
                                 fontWeight: 600,
                                 fontSize: 13,
                                 padding: '0 12px',
-                                backgroundColor: '#FFFFFF',
-                                border: '1px solid #D1D5DB',
-                                color: '#111827',
+                                backgroundColor: '#1E1E25',
+                                border: '1px solid #232329',
+                                color: '#F2F2F5',
                                 cursor: 'pointer',
                             }}
                         >

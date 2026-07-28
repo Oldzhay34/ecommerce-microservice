@@ -14,7 +14,7 @@ export function ReviewItem({
     onToast: (m: string) => void;
 }) {
     return (
-        <div className="bg-white border border-line rounded-card px-6 py-5">
+        <div className="bg-surface border border-line rounded-card px-6 py-5">
             <div className="flex items-center justify-between">
                 <StarRating rating={review.rating} />
                 <span className="text-faint text-[11px] uppercase tracking-wide">
@@ -31,7 +31,7 @@ export function ReviewItem({
             )}
 
             {review.reply ? (
-                <div className="mt-3 bg-neutral-bg rounded-btn px-3 py-2 text-sm text-ink">
+                <div className="mt-3 bg-neutral-bg rounded-btn px-3 py-2 text-sm text-ink border border-line">
                     <span className="font-semibold">Mağaza Yanıtı: </span>
                     {review.reply}
                 </div>

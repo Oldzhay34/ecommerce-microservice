@@ -12,10 +12,10 @@ export function RatingSummary({
 
     return (
         <div className="flex items-center gap-3">
-            <span className="text-2xl font-bold text-gray-900">{rounded.toFixed(1)}</span>
+            <span className="text-2xl font-bold text-ink">{rounded.toFixed(1)}</span>
             <div>
                 <StarRating rating={Math.round(averageRating)} size="md" />
-                <p className="text-xs text-gray-500 mt-0.5">
+                <p className="text-xs text-ink-muted mt-0.5">
                     {totalCount} değerlendirme
                 </p>
             </div>

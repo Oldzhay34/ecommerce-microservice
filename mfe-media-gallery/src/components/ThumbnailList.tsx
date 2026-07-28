@@ -17,10 +17,10 @@ export const ThumbnailList: React.FC<ThumbnailListProps> = ({ assets, activeId, 
                     <div
                         key={asset.assetId}
                         onClick={() => onSelect(asset)}
-                        className={`w-[72px] h-[72px] rounded-lg overflow-hidden shrink-0 cursor-pointer transition-colors border ${
+                        className={`w-[72px] h-[72px] rounded-sb-lg overflow-hidden shrink-0 cursor-pointer transition-colors border ${
                             isActive
-                                ? 'border-[2px] border-[#1D4ED8]'
-                                : 'border border-[#E5E7EB] hover:border-[#9CA3AF]'
+                                ? 'border-[2px] border-brand'
+                                : 'border border-border hover:border-border-strong'
                         }`}
                     >
                         <img

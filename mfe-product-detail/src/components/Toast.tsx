@@ -42,12 +42,13 @@ export function Toast({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                backgroundColor: '#111827',
-                color: '#FFFFFF',
+                backgroundColor: '#1E1E25',
+                color: '#F2F2F5',
                 fontSize: 14,
                 padding: '8px 16px',
-                borderRadius: 8,
-                boxShadow: '0 10px 15px -3px rgba(0,0,0,0.25), 0 4px 6px -4px rgba(0,0,0,0.25)',
+                borderRadius: 10,
+                border: '1px solid #2E2E36',
+                boxShadow: '0 12px 32px -8px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.04)',
             }}
         >
             <span>{message}</span>
@@ -60,7 +61,7 @@ export function Toast({
                     padding: 0,
                     fontSize: 14,
                     fontWeight: 600,
-                    color: '#93C5FD',
+                    color: '#5C87F8',
                     textDecoration: 'underline',
                     cursor: 'pointer',
                 }}

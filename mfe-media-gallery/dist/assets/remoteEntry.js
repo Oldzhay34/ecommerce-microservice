@@ -1,13 +1,13 @@
 const exportSet = new Set(['Module', '__esModule', 'default', '_export_sfc']);
       let moduleMap = {
 "./ProductGallery":()=>{
-      dynamicLoadingCss(["style-Doclmk5w.css"]);
-      return __federation_import('./__federation_expose_ProductGallery-Dye1x6PL.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
+      dynamicLoadingCss(["style-CTDRrfW7.css"]);
+      return __federation_import('./__federation_expose_ProductGallery-C09M_oPr.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
 "./ProductImageUpload":()=>{
-      dynamicLoadingCss(["style-Doclmk5w.css"]);
-      return __federation_import('./__federation_expose_ProductImageUpload-Bac_IKIg.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
+      dynamicLoadingCss(["style-CTDRrfW7.css"]);
+      return __federation_import('./__federation_expose_ProductImageUpload-Cb0d0rPL.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
 "./useProductImageUpload":()=>{
-      dynamicLoadingCss(["style-Doclmk5w.css"]);
+      dynamicLoadingCss(["style-CTDRrfW7.css"]);
       return __federation_import('./__federation_expose_UseProductImageUpload-CbRseqhR.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
     const seen = {};
     const dynamicLoadingCss = (cssFilePaths) => {

@@ -34,6 +34,8 @@ public class SecurityConfig {
                         // ÇALIŞMAZ ve SecurityContext o noktada boştur. Sonuç: gerçek 500
                         // hataları istemciye 403 olarak dönüyor, hata gövdesi kayboluyordu.
                         .requestMatchers("/error").permitAll()
+                        // Prometheus JWT ile authenticate olamaz; scrape endpoint'i public olmali.
+                        .requestMatchers("/actuator/health", "/actuator/prometheus", "/actuator/metrics").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/payments/me", "/api/payments/me/**").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/payments").hasAnyRole("STORE", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/payments/*/refund-approve").hasRole("ADMIN")

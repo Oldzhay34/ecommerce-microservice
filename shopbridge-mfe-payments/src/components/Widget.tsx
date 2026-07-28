@@ -24,11 +24,11 @@ interface PaymentResponse {
 
 // PaymentStatus enum -> okunabilir etiket + renk
 const STATUS_LABELS: Record<string, { text: string; className: string }> = {
-    PENDING:          { text: 'Beklemede',         className: 'bg-yellow-100 text-yellow-800' },
-    COMPLETED:        { text: 'Tamamlandı',        className: 'bg-green-100 text-green-800' },
-    REFUND_REQUESTED: { text: 'İade Talep Edildi', className: 'bg-blue-100 text-blue-800' },
-    FAILED:           { text: 'Başarısız',         className: 'bg-red-100 text-red-800' },
-    REFUNDED:         { text: 'İade Edildi',       className: 'bg-gray-200 text-gray-700' },
+    PENDING:          { text: 'Beklemede',         className: 'bg-warning/10 text-warning' },
+    COMPLETED:        { text: 'Tamamlandı',        className: 'bg-success/10 text-success' },
+    REFUND_REQUESTED: { text: 'İade Talep Edildi', className: 'bg-brand/10 text-brand' },
+    FAILED:           { text: 'Başarısız',         className: 'bg-danger/10 text-danger' },
+    REFUNDED:         { text: 'İade Edildi',       className: 'bg-surface-hover text-ink-muted' },
 };
 
 export default function PaymentsWidget() {
@@ -67,27 +67,27 @@ export default function PaymentsWidget() {
     if (!userId) return <ErrorBanner message="Oturum bilgisi bulunamadı."/>;
     if (isLoading) return <Skeleton height="h-48"/>;
     if (isError) return <ErrorBanner message="Ödemeler yüklenemedi."/>;
-    if (!payments?.length) return <Card><p className="text-gray-500 text-center">Henüz bir ödemeniz bulunmuyor.</p>
+    if (!payments?.length) return <Card><p className="text-ink-muted text-center">Henüz bir ödemeniz bulunmuyor.</p>
     </Card>;
 
     return (
         <Card>
-            <h3 className="font-semibold text-lg mb-4 text-gray-800">Geçmiş Ödemelerim</h3>
+            <h3 className="font-semibold text-lg mb-4 text-ink">Geçmiş Ödemelerim</h3>
             <ul className="space-y-3">
                 {payments.map((payment) => {
                     const badge = STATUS_LABELS[payment.status] ?? {
                         text: payment.status,
-                        className: 'bg-gray-100 text-gray-600'
+                        className: 'bg-surface-hover text-ink-muted'
                     };
                     return (
                         <li key={payment.id}
-                            className="flex justify-between items-center border-b pb-3 last:border-0 last:pb-0">
+                            className="flex justify-between items-center border-b border-border pb-3 last:border-0 last:pb-0">
                             <div>
-                                <p className="font-medium text-gray-900">
+                                <p className="font-medium text-ink">
                                     {payment.amount.toLocaleString('tr-TR', {style: 'currency', currency: 'TRY'})}
                                 </p>
                                 <div className="flex items-center gap-2 mt-1">
-                                    <span className="text-sm text-gray-500">#{payment.orderId.slice(0, 8)}</span>
+                                    <span className="text-sm text-ink-muted">#{payment.orderId.slice(0, 8)}</span>
                                     <span
                                         className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${badge.className}`}>
                                         {badge.text}
@@ -106,16 +106,16 @@ export default function PaymentsWidget() {
 
             {selectedPaymentId && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                    <div className="bg-white p-6 rounded-lg w-full max-w-sm shadow-xl">
-                        <h4 className="font-bold text-lg mb-4 text-gray-900">İade Talebi Oluştur</h4>
+                    <div className="bg-surface-raised p-6 rounded-sb-lg w-full max-w-sm shadow-sb-lg border border-border">
+                        <h4 className="font-bold text-lg mb-4 text-ink">İade Talebi Oluştur</h4>
                         <form onSubmit={handleSubmit((data) => refundMutation.mutate(data))}>
                             <textarea
                                 {...register('reason')}
-                                className={`w-full border p-3 rounded-md mb-1 focus:ring-2 outline-none ${errors.reason ? 'border-red-500 focus:ring-red-200' : 'border-gray-300 focus:ring-blue-200'}`}
+                                className={`w-full bg-surface border p-3 rounded-sb mb-1 text-ink focus:ring-2 outline-none ${errors.reason ? 'border-danger focus:ring-danger/20' : 'border-border focus:ring-brand/20'}`}
                                 placeholder="Lütfen iade sebebini detaylıca açıklayınız (min 10 karakter)..."
                                 rows={4}
                             ></textarea>
-                            {errors.reason && <p className="text-red-500 text-sm mb-4">{errors.reason.message}</p>}
+                            {errors.reason && <p className="text-danger text-sm mb-4">{errors.reason.message}</p>}
 
                             <div className="flex justify-end gap-3 mt-4">
                                 <Button variant="secondary" onClick={() => {

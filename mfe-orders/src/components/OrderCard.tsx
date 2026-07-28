@@ -41,7 +41,7 @@ export function OrderCard({
         });
 
     return (
-        <div className="bg-white border border-line rounded-card px-6 py-5">
+        <div className="bg-surface border border-line rounded-card shadow-sb px-6 py-5">
             <div className="flex items-center justify-between">
                 <div className="text-ink font-semibold">Sipariş #{order.id.slice(0, 8)}</div>
                 <StatusBadge status={order.status} />
@@ -68,13 +68,13 @@ export function OrderCard({
                 <div className="mt-4 flex gap-3">
                     <button
                         onClick={() => setDialog('ship')}
-                        className="h-10 rounded-btn font-semibold bg-brand text-white px-4 hover:bg-brand-dark"
+                        className="h-10 rounded-full font-semibold bg-brand text-white px-4 hover:bg-brand-dark"
                     >
                         Kargola
                     </button>
                     <button
                         onClick={() => setDialog('cancel')}
-                        className="h-10 rounded-btn font-semibold bg-white border border-danger-line text-err-tx px-4"
+                        className="h-10 rounded-btn font-semibold bg-danger-soft border border-danger-line text-err-tx px-4"
                     >
                         İptal Et
                     </button>

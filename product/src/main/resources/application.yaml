@@ -51,3 +51,18 @@ spring:
 app:
   security:
     jwt-secret: "EcommerceSharedJwtSecretKey2026VeryLongAndSecure32Bytes"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

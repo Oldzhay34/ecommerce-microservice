@@ -17,22 +17,22 @@ export function PaginationBar({ currentPage, totalPages, hasPrev, hasNext, onPag
             <button
                 onClick={() => onPageChange(currentPage - 1)}
                 disabled={!hasPrev}
-                className="px-3 py-1 rounded-md text-sm border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-1 rounded-sb text-sm border border-border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-hover text-ink-muted"
             >
                 Önceki
             </button>
 
             {numbers.map((n, i) =>
                 n === '…' ? (
-                    <span key={`e${i}`} className="px-2 text-gray-400">…</span>
+                    <span key={`e${i}`} className="px-2 text-ink-faint">…</span>
                 ) : (
                     <button
                         key={n}
                         onClick={() => onPageChange(n)}
-                        className={`px-3 py-1 rounded-md text-sm border ${
+                        className={`px-3 py-1 rounded-sb text-sm border ${
                             n === currentPage
-                                ? 'bg-blue-700 text-white border-blue-700'
-                                : 'border-gray-300 hover:bg-gray-50'
+                                ? 'bg-brand text-white border-brand'
+                                : 'border-border text-ink-muted hover:bg-surface-hover'
                         }`}
                     >
                         {n}
@@ -43,7 +43,7 @@ export function PaginationBar({ currentPage, totalPages, hasPrev, hasNext, onPag
             <button
                 onClick={() => onPageChange(currentPage + 1)}
                 disabled={!hasNext}
-                className="px-3 py-1 rounded-md text-sm border border-gray-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                className="px-3 py-1 rounded-sb text-sm border border-border disabled:opacity-40 disabled:cursor-not-allowed hover:bg-surface-hover text-ink-muted"
             >
                 Sonraki
             </button>

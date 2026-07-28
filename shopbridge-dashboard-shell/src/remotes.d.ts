@@ -9,7 +9,7 @@ type StoreSession = {
     role: 'STORE';
 };
 
-declare module 'mfe_products/StoreProducts' {
+declare module 'mfe_products_store/StoreProducts' {
     import type { ComponentType } from 'react';
     const StoreProducts: ComponentType<{
         session: StoreSession;
@@ -18,7 +18,7 @@ declare module 'mfe_products/StoreProducts' {
     export default StoreProducts;
 }
 
-declare module 'mfe_products/StoreProductCount' {
+declare module 'mfe_products_store/StoreProductCount' {
     import type { ComponentType } from 'react';
     const StoreProductCount: ComponentType<{
         session: StoreSession;
@@ -26,7 +26,7 @@ declare module 'mfe_products/StoreProductCount' {
     export default StoreProductCount;
 }
 
-declare module 'mfe_orders/StoreOrders' {
+declare module 'mfe_orders_store/StoreOrders' {
     import type { ComponentType } from 'react';
     const StoreOrders: ComponentType<{
         session: StoreSession;
@@ -34,7 +34,7 @@ declare module 'mfe_orders/StoreOrders' {
     export default StoreOrders;
 }
 
-declare module 'mfe_orders/StoreOrderMetrics' {
+declare module 'mfe_orders_store/StoreOrderMetrics' {
     import type { ComponentType } from 'react';
     const StoreOrderMetrics: ComponentType<{
         session: StoreSession;
@@ -42,7 +42,7 @@ declare module 'mfe_orders/StoreOrderMetrics' {
     export default StoreOrderMetrics;
 }
 
-declare module 'mfe_reviews/StoreReviews' {
+declare module 'mfe_reviews_store/StoreReviews' {
     import type { ComponentType } from 'react';
     const StoreReviews: ComponentType<{
         session: StoreSession;

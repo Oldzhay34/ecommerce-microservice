@@ -83,7 +83,7 @@ export function ProductImageUploader({
             />
 
             {images.length > 0 && (
-                <p className="text-muted text-xs mt-3">
+                <p className="text-ink-muted text-xs mt-3">
                     İlk sıradaki görsel ürünün kapak görseli olur. Sıralamayı ↑ ile
                     değiştirebilirsiniz.
                 </p>

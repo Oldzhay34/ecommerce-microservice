@@ -11,5 +11,5 @@
  * eklenmesi) — Review servisi DOKUNULMAZ olduğu için ayrı prompt gerekir.
  */
 export function CustomerLabel({ index }: { index: number }) {
-    return <span className="font-medium text-gray-900">Müşteri #{index + 1}</span>;
+    return <span className="font-medium text-ink">Müşteri #{index + 1}</span>;
 }

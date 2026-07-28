@@ -2,15 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html { color-scheme: light; }
+  body { background-color: #ffffff; color: #0a0a0a; }
+  ::selection { background-color: rgba(29, 78, 216, 0.15); }
+}
+
 @layer utilities {
     .sb-shimmer {
-        background: #f6f7f8;
+        background: #F3F4F6;
         background-image: linear-gradient(
                 to right,
-                #f6f7f8 0%,
-                #edeef1 20%,
-                #f6f7f8 40%,
-                #f6f7f8 100%
+                #F3F4F6 0%,
+                #E9EAEE 20%,
+                #F3F4F6 40%,
+                #F3F4F6 100%
         );
         background-repeat: no-repeat;
         background-size: 800px 100%;

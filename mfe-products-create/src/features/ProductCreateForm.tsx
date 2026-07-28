@@ -132,21 +132,21 @@ export function ProductCreateForm({
                 type="button"
                 onClick={handleCancel}
                 disabled={busy}
-                className="text-muted text-sm hover:text-ink disabled:opacity-50"
+                className="text-ink-muted text-sm hover:text-ink disabled:opacity-50"
             >
                 ← Panele Dön
             </button>
 
             <h1 className="text-ink text-2xl font-bold mt-4">Yeni Ürün Ekle</h1>
-            <p className="text-muted text-sm mt-1">
+            <p className="text-ink-muted text-sm mt-1">
                 Ürün bilgilerini girin; sağdaki önizleme müşterilerin göreceği kartı yansıtır.
             </p>
 
             <form onSubmit={handleSubmit(onSubmit)} className="mt-8 flex flex-wrap items-start gap-6">
                 {/* Sol sütun — form kartı */}
                 <div className="flex-[1_1_640px] min-w-0">
-                    <div className="bg-white border border-line rounded-card px-7 py-6">
-                        <div className="text-muted text-[13px] font-semibold uppercase tracking-[0.06em] mb-4">
+                    <div className="bg-surface border border-border shadow-sb rounded-card px-7 py-6">
+                        <div className="text-ink-muted text-[13px] font-semibold uppercase tracking-[0.06em] mb-4">
                             Ürün Bilgileri
                         </div>
 
@@ -161,8 +161,8 @@ export function ProductCreateForm({
                     </div>
 
                     {/* Görseller — mfe-media-gallery'den federation ile gelir */}
-                    <div className="bg-white border border-line rounded-card px-7 py-6 mt-6">
-                        <div className="text-muted text-[13px] font-semibold uppercase tracking-[0.06em] mb-4">
+                    <div className="bg-surface border border-border shadow-sb rounded-card px-7 py-6 mt-6">
+                        <div className="text-ink-muted text-[13px] font-semibold uppercase tracking-[0.06em] mb-4">
                             Ürün Görselleri
                         </div>
 
@@ -187,14 +187,14 @@ export function ProductCreateForm({
                             type="button"
                             onClick={handleCancel}
                             disabled={busy}
-                            className="h-10 rounded-btn font-semibold bg-white border border-line-strong text-ink px-4 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="h-10 rounded-btn font-semibold bg-surface border border-border-strong text-ink px-4 hover:bg-surface-hover disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Vazgeç
                         </button>
                         <button
                             type="submit"
                             disabled={busy}
-                            className="h-10 rounded-btn font-semibold bg-brand text-white px-4 hover:bg-brand-dark disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                            className="h-10 rounded-full font-semibold bg-brand text-white px-4 hover:bg-brand-hover disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
                         >
                             {busy && <Spinner />}
                             {isUploading ? 'Görseller yükleniyor…' : 'Ürünü Kaydet'}

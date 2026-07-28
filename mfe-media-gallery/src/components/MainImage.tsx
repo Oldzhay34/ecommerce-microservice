@@ -15,7 +15,7 @@ export const MainImage: React.FC<MainImageProps> = ({ asset }) => {
 
     return (
         <div
-            className="w-full aspect-square rounded-xl overflow-hidden border border-[#E5E7EB] bg-[#F3F4F6]"
+            className="w-full aspect-square rounded-sb-lg overflow-hidden border border-border bg-surface"
             style={{ aspectRatio: '1 / 1' }}
         >
             <img

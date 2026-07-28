@@ -29,16 +29,16 @@ export const AdminDashboardPage: React.FC = () => {
     const sessionProps: AdminSession = { authToken, userId, role };
 
     return (
-        <div className="min-h-screen bg-[#F4F5F7] flex flex-col">
+        <div className="min-h-screen bg-canvas flex flex-col">
             <TopBar />
-            <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 py-8">
-                <div className="mb-8">
-                    <h1 className="text-2xl font-bold text-[#111827]">Yönetim Paneli</h1>
-                    <p className="text-sm text-[#6B7280] mt-1">Siparişleri, ödemeleri ve yorumları buradan yönetin.</p>
+            <main className="flex-1 max-w-[1280px] w-full mx-auto px-6 md:px-8 py-12">
+                <div className="mb-10">
+                    <h1 className="text-3xl font-semibold tracking-tight text-ink-primary">Yönetim Paneli</h1>
+                    <p className="text-base text-ink-secondary mt-2">Siparişleri, ödemeleri ve yorumları buradan yönetin.</p>
                 </div>
 
                 {/* Metrik Şeridi */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
                     <RemoteMount>
                         <AdminOrderCount session={sessionProps} />
                     </RemoteMount>
@@ -72,7 +72,7 @@ export const AdminDashboardPage: React.FC = () => {
                 />
 
                 {/* Aktif Sekme Paneli */}
-                <div className="mt-6 bg-white border border-[#E5E7EB] rounded-xl p-6 md:p-7 shadow-sm">
+                <div className="mt-6 bg-surface rounded-sb-lg p-6 md:p-8 shadow-sb">
                     {activeTab === 'orders' && (
                         <RemoteMount>
                             <AdminOrders session={sessionProps} />

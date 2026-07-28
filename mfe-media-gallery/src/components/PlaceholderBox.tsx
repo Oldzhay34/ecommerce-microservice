@@ -3,14 +3,14 @@ import React from 'react';
 export const PlaceholderBox: React.FC = () => {
     return (
         <div
-            className="w-full aspect-square bg-[#F3F4F6] border border-[#E5E7EB] rounded-xl flex flex-col items-center justify-center gap-2"
+            className="w-full aspect-square bg-surface border border-border rounded-sb-lg flex flex-col items-center justify-center gap-2"
             style={{ aspectRatio: '1 / 1' }}
         >
             <svg
                 width="48"
                 height="48"
                 viewBox="0 0 24 24"
-                stroke="#9CA3AF"
+                stroke="#6C6C78"
                 strokeWidth="1.5"
                 fill="none"
                 strokeLinecap="round"
@@ -20,7 +20,7 @@ export const PlaceholderBox: React.FC = () => {
                 <circle cx="8.5" cy="8.5" r="1.5" />
                 <polyline points="21 15 16 10 5 21" />
             </svg>
-            <span className="text-[13px] text-[#9CA3AF] text-center px-4">
+            <span className="text-[13px] text-ink-faint text-center px-4">
         Görsel yakında eklenecek
       </span>
         </div>

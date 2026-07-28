@@ -11,14 +11,7 @@ export function RemoteMount({ children }: { children: ReactNode }) {
         <RemoteErrorBoundary
             fallback={
                 <div
-                    style={{
-                        background: '#FFFFFF',
-                        border: '1px solid #E5E7EB',
-                        borderRadius: 12,
-                        padding: '20px 24px',
-                        color: '#6B7280',
-                        fontSize: 14,
-                    }}
+                    className="bg-surface rounded-sb-lg px-6 py-5 text-ink-muted text-sm shadow-sb"
                     role="alert"
                 >
                     Bu bölüm şu anda yüklenemedi. Sayfayı yenileyin.

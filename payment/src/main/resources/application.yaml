@@ -41,3 +41,18 @@ iyzico:
 jwt:
   secret: "EcommerceSharedJwtSecretKey2026VeryLongAndSecure32Bytes"
   expiration: 3600000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

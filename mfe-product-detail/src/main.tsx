@@ -29,11 +29,11 @@ const DEV_PRODUCT_ID = 'eee829bb-0000-0000-0000-000000000000';
 
 function DevApp() {
     return (
-        <div style={{ minHeight: '100vh', backgroundColor: '#F4F5F7', padding: 24 }}>
+        <div style={{ minHeight: '100vh', backgroundColor: '#0A0A0C', padding: 24 }}>
             <div style={{ maxWidth: 1120, margin: '0 auto' }}>
                 <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 20 }}>
-                    <span style={{ color: '#000000' }}>Shop</span>
-                    <span style={{ color: '#1D4ED8' }}>Bridge</span>
+                    <span style={{ color: '#F2F2F5' }}>Shop</span>
+                    <span className="text-brand">Bridge</span>
                 </div>
                 <ProductDetail
                     session={devSession}

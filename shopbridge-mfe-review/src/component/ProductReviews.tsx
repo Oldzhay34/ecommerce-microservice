@@ -17,7 +17,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
     if (isLoading) {
         return (
-            <section className="bg-white border border-gray-200 rounded-xl p-6 mt-6">
+            <section className="bg-surface border border-border rounded-sb-lg p-6 mt-6">
                 <Skeleton height="h-6" />
                 <div className="mt-4">
                     <Skeleton height="h-32" />
@@ -28,7 +28,7 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
 
     if (isError) {
         return (
-            <section className="bg-white border border-gray-200 rounded-xl p-6 mt-6">
+            <section className="bg-surface border border-border rounded-sb-lg p-6 mt-6">
                 <ErrorBanner message="Değerlendirmeler yüklenemedi." />
             </section>
         );
@@ -38,16 +38,16 @@ export default function ProductReviews({ productId }: ProductReviewsProps) {
     const averageRating = data?.averageRating ?? 0;
 
     return (
-        <section className="bg-white border border-gray-200 rounded-xl p-6 mt-6">
+        <section className="bg-surface border border-border rounded-sb-lg p-6 mt-6">
             <div className="flex items-baseline justify-between gap-4 flex-wrap">
-                <h2 className="text-lg font-semibold text-gray-900">Değerlendirmeler</h2>
+                <h2 className="text-lg font-semibold text-ink">Değerlendirmeler</h2>
                 {reviews.length > 0 && (
                     <RatingSummary averageRating={averageRating} totalCount={reviews.length} />
                 )}
             </div>
 
             {reviews.length === 0 ? (
-                <p className="text-gray-500 text-sm text-center py-10">
+                <p className="text-ink-muted text-sm text-center py-10">
                     Bu ürün için henüz değerlendirme yapılmamış.
                 </p>
             ) : (

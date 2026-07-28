@@ -26,9 +26,9 @@ function CatalogInner() {
     return (
         <section className="w-full">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-lg text-gray-800">Ürünler</h3>
+                <h3 className="font-semibold text-lg text-ink">Ürünler</h3>
                 {!isLoading && !isError && (
-                    <span className="text-sm text-gray-400">{totalItems} ürün</span>
+                    <span className="text-sm text-ink-faint">{totalItems} ürün</span>
                 )}
             </div>
 
@@ -43,7 +43,7 @@ function CatalogInner() {
             {isError && <ErrorBanner message="Ürünler yüklenemedi. Lütfen daha sonra tekrar deneyin." />}
 
             {!isLoading && !isError && totalItems === 0 && (
-                <div className="p-8 text-center text-gray-500 border border-gray-100 rounded-lg bg-gray-50">
+                <div className="p-8 text-center text-ink-muted border border-border rounded-sb-lg bg-surface">
                     Aramanıza uygun ürün bulunamadı. Filtreyi temizlemeyi deneyin.
                 </div>
             )}

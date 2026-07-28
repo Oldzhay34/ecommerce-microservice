@@ -21,7 +21,7 @@ export function AddToCartButton({ stock, isPending, onClick }: AddToCartButtonPr
             type="button"
             disabled={disabled}
             onClick={onClick}
-            className={disabled ? undefined : 'hover:bg-[#1E40AF]'}
+            className={disabled ? undefined : 'hover:bg-brand-hover'}
             style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -29,7 +29,7 @@ export function AddToCartButton({ stock, isPending, onClick }: AddToCartButtonPr
                 gap: 8,
                 width: '100%',
                 height: 48,
-                borderRadius: 8,
+                borderRadius: 9999,
                 border: 'none',
                 fontSize: 15,
                 fontWeight: 600,

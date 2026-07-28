@@ -34,6 +34,8 @@ public class SecurityConfig {
                         // kuralı devreye girer ve HER 5xx istemciye 403 olarak
                         // döner - asıl hata tamamen gizlenir.
                         .requestMatchers("/error").permitAll()
+                        // Prometheus JWT ile authenticate olamaz; scrape endpoint'i public olmali.
+                        .requestMatchers("/actuator/health", "/actuator/prometheus", "/actuator/metrics").permitAll()
                         .requestMatchers("/api/internal/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/reviews/product/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/reviews").hasAuthority("ROLE_CUSTOMER")

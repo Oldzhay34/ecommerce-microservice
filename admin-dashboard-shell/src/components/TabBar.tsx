@@ -16,18 +16,18 @@ export const TabBar: React.FC<TabBarProps> = ({
                                                   reviewCountNode,
                                               }) => {
     return (
-        <div className="w-full border-b border-[#E5E7EB] flex items-center space-x-2">
+        <div className="w-full border-b border-line-card flex items-center space-x-2">
             <button
                 onClick={() => onTabChange('orders')}
                 className={`h-11 px-5 text-sm font-semibold border-b-2 transition-all flex items-center ${
                     activeTab === 'orders'
-                        ? 'text-[#1D4ED8] border-[#1D4ED8]'
-                        : 'text-[#6B7280] border-transparent hover:text-[#111827]'
+                        ? 'text-brand border-brand'
+                        : 'text-ink-secondary border-transparent hover:text-ink-primary'
                 }`}
             >
                 <span>Siparişler</span>
                 <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full ${
-                    activeTab === 'orders' ? 'bg-[#EFF6FF] text-[#1D4ED8]' : 'bg-gray-100 text-[#6B7280]'
+                    activeTab === 'orders' ? 'bg-brand-soft text-brand' : 'bg-surface text-ink-secondary'
                 }`}>
           {orderCountNode}
         </span>
@@ -37,13 +37,13 @@ export const TabBar: React.FC<TabBarProps> = ({
                 onClick={() => onTabChange('payments')}
                 className={`h-11 px-5 text-sm font-semibold border-b-2 transition-all flex items-center ${
                     activeTab === 'payments'
-                        ? 'text-[#1D4ED8] border-[#1D4ED8]'
-                        : 'text-[#6B7280] border-transparent hover:text-[#111827]'
+                        ? 'text-brand border-brand'
+                        : 'text-ink-secondary border-transparent hover:text-ink-primary'
                 }`}
             >
                 <span>Ödemeler</span>
                 <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full ${
-                    activeTab === 'payments' ? 'bg-[#EFF6FF] text-[#1D4ED8]' : 'bg-gray-100 text-[#6B7280]'
+                    activeTab === 'payments' ? 'bg-brand-soft text-brand' : 'bg-surface text-ink-secondary'
                 }`}>
           {refundCountNode}
         </span>
@@ -53,13 +53,13 @@ export const TabBar: React.FC<TabBarProps> = ({
                 onClick={() => onTabChange('reviews')}
                 className={`h-11 px-5 text-sm font-semibold border-b-2 transition-all flex items-center ${
                     activeTab === 'reviews'
-                        ? 'text-[#1D4ED8] border-[#1D4ED8]'
-                        : 'text-[#6B7280] border-transparent hover:text-[#111827]'
+                        ? 'text-brand border-brand'
+                        : 'text-ink-secondary border-transparent hover:text-ink-primary'
                 }`}
             >
                 <span>Yorumlar</span>
                 <span className={`ml-2 px-2 py-0.5 text-xs font-semibold rounded-full ${
-                    activeTab === 'reviews' ? 'bg-[#EFF6FF] text-[#1D4ED8]' : 'bg-gray-100 text-[#6B7280]'
+                    activeTab === 'reviews' ? 'bg-brand-soft text-brand' : 'bg-surface text-ink-secondary'
                 }`}>
           {reviewCountNode}
         </span>

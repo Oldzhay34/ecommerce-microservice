@@ -50,12 +50,12 @@ export function ImageDropzone({
                     }
                 }}
                 className={[
-                    'w-full rounded-btn border border-dashed px-4 py-8 text-center',
+                    'w-full rounded-sb border border-dashed px-4 py-8 text-center',
                     'transition-colors',
                     blocked
-                        ? 'border-line bg-canvas cursor-not-allowed opacity-60'
+                        ? 'border-border bg-canvas cursor-not-allowed opacity-60'
                         : 'cursor-pointer hover:border-brand',
-                    isDragging ? 'border-brand bg-brand/5' : 'border-line-strong bg-white',
+                    isDragging ? 'border-brand bg-brand/10' : 'border-border-strong bg-surface',
                 ].join(' ')}
             >
                 <p className="text-ink text-sm font-semibold">
@@ -64,7 +64,7 @@ export function ImageDropzone({
                         : 'Görselleri sürükleyin veya seçmek için tıklayın'}
                 </p>
                 {!isFull && (
-                    <p className="text-muted text-xs mt-1.5">
+                    <p className="text-ink-muted text-xs mt-1.5">
                         PNG, JPEG veya WebP · tek dosya en fazla 5MB · {remainingSlots} görsel daha
                         eklenebilir
                     </p>

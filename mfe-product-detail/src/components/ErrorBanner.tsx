@@ -14,11 +14,10 @@ export function ErrorBanner({ message, children }: ErrorBannerProps) {
         <div>
             <div
                 role="alert"
+                className="bg-danger/10 text-danger"
                 style={{
-                    backgroundColor: '#FEF2F2',
-                    border: '1px solid #FCA5A5',
-                    color: '#B91C1C',
-                    borderRadius: 8,
+                    border: '1px solid rgba(241,80,60,0.4)',
+                    borderRadius: 10,
                     padding: '12px 16px',
                     fontSize: 14,
                     lineHeight: 1.45,

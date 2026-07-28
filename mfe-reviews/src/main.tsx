@@ -16,7 +16,7 @@ const devSession: StoreSession = {
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
-            <div style={{ maxWidth: 1120, margin: '0 auto', padding: 24, background: '#F4F5F7', minHeight: '100vh' }}>
+            <div style={{ maxWidth: 1120, margin: '0 auto', padding: 24, background: '#0A0A0C', minHeight: '100vh' }}>
                 <StoreReviews session={devSession} />
             </div>
         </QueryClientProvider>

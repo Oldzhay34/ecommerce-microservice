@@ -41,21 +41,21 @@ export default function OrdersWidget() {
     if (!userId) return <ErrorBanner message="Kullanıcı kimliği bulunamadı." />;
     if (isLoading) return <Skeleton height="h-48" />;
     if (isError) return <ErrorBanner message="Siparişler yüklenirken bir hata oluştu." />;
-    if (!orders?.length) return <Card><p className="text-gray-500 text-center">Henüz siparişiniz bulunmuyor.</p></Card>;
+    if (!orders?.length) return <Card><p className="text-ink-muted text-center">Henüz siparişiniz bulunmuyor.</p></Card>;
 
     return (
         <Card>
-            <h3 className="font-semibold text-lg mb-4 text-gray-800">Son Siparişlerim</h3>
+            <h3 className="font-semibold text-lg mb-4 text-ink">Son Siparişlerim</h3>
             <ul className="space-y-3">
                 {orders.map((order) => (
-                    <li key={order.id} className="flex justify-between items-center border-b pb-3 last:border-0 last:pb-0">
+                    <li key={order.id} className="flex justify-between items-center border-b border-border pb-3 last:border-0 last:pb-0">
                         <div>
-                            <p className="font-medium text-gray-900">#{order.id}</p>
-                            <p className="text-sm text-gray-500">
+                            <p className="font-medium text-ink">#{order.id}</p>
+                            <p className="text-sm text-ink-muted">
                                 {new Date(order.createdAt).toLocaleDateString('tr-TR')} •{' '}
                                 <span className="font-medium">{order.status}</span>
                             </p>
-                            <p className="text-sm text-gray-700">
+                            <p className="text-sm text-ink-muted">
                                 {order.totalAmount.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })}
                             </p>
                         </div>

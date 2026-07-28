@@ -24,7 +24,7 @@ export class RemoteErrorBoundary extends Component<Props, State> {
     public render() {
         if (this.state.hasError) {
             return (
-                <div className="p-6 border border-red-200 bg-[#FEF2F2] rounded-xl text-[#B91C1C]">
+                <div className="p-6 border border-danger/30 bg-danger-soft rounded-sb-lg text-danger">
                     <h4 className="font-semibold text-base mb-1">Modül Yükleme Hatası</h4>
                     <p className="text-sm">Bu bölüm şu anda yüklenemedi. Sayfayı yenileyin.</p>
                 </div>

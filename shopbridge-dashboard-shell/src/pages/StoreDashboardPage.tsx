@@ -5,12 +5,13 @@ import {SectionHeader} from '../components/SectionHeader';
 import {RemoteMount} from '../components/RemoteMount';
 import {lazy} from 'react';
 
-// Görev 5'te aktif kompozisyon. Görev 1'de iskelet + slotlar hazır.
-const StoreProductCount = lazy(() => import('mfe_products/StoreProductCount'));
-const StoreOrderMetrics = lazy(() => import('mfe_orders/StoreOrderMetrics'));
-const StoreProducts = lazy(() => import('mfe_products/StoreProducts'));
-const StoreOrders = lazy(() => import('mfe_orders/StoreOrders'));
-const StoreReviews = lazy(() => import('mfe_reviews/StoreReviews'));
+// Store* bileşenleri customer Widget'ını sunan mfe_products/mfe_orders/mfe_reviews'da değil,
+// ayrı "_store" remote'larında (bkz. vite.config.ts).
+const StoreProductCount = lazy(() => import('mfe_products_store/StoreProductCount'));
+const StoreOrderMetrics = lazy(() => import('mfe_orders_store/StoreOrderMetrics'));
+const StoreProducts = lazy(() => import('mfe_products_store/StoreProducts'));
+const StoreOrders = lazy(() => import('mfe_orders_store/StoreOrders'));
+const StoreReviews = lazy(() => import('mfe_reviews_store/StoreReviews'));
 
 export function StoreDashboardPage() {
     const navigate = useNavigate();
@@ -27,33 +28,17 @@ export function StoreDashboardPage() {
     }
 
     const session: StoreSession = {authToken, storeId, role: 'STORE'};
+    const shortId = storeId.slice(0, 8);
 
     return (
-        <div style={{minHeight: '100vh', background: '#F4F5F7'}}>
-            <TopBar onLogout={handleLogout}/>
+        <div className="min-h-screen bg-canvas">
+            <TopBar identity={`Mağaza: ${shortId}`} onLogout={handleLogout} />
 
-            <main
-                style={{
-                    maxWidth: 1120,
-                    margin: '0 auto',
-                    padding: '0 24px',
-                    paddingTop: 32,
-                    paddingBottom: 64,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 32,
-                }}
-            >
+            <main className="max-w-6xl mx-auto px-6 md:px-8 pt-12 pb-24 flex flex-col gap-14">
                 {/* 1 — MAĞAZA ÖZETİ */}
                 <section>
                     <SectionHeader>Mağaza Özeti</SectionHeader>
-                    <div
-                        style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                            gap: 16,
-                        }}
-                    >
+                    <div className="grid gap-5" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))' }}>
                         <RemoteMount>
                             <StoreProductCount session={session}/>
                         </RemoteMount>

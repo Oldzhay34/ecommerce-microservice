@@ -42,7 +42,7 @@ export default function CartWidget() {
     if (!cartData?.items || cartData.items.length === 0) {
         return (
             <Card>
-                <p className="text-gray-500 text-center py-6">Sepetiniz şu an boş.</p>
+                <p className="text-ink-muted text-center py-6">Sepetiniz şu an boş.</p>
             </Card>
         );
     }
@@ -64,29 +64,29 @@ export default function CartWidget() {
 
     return (
         <Card className="flex flex-col py-6 px-4">
-            <h3 className="font-semibold text-xl mb-4 text-gray-800 border-b pb-2">Sepetim ({totalItems} Ürün)</h3>
+            <h3 className="font-semibold text-xl mb-4 text-ink border-b border-border pb-2">Sepetim ({totalItems} Ürün)</h3>
 
             <div className="flex flex-col space-y-3 mb-6 max-h-64 overflow-y-auto pr-2">
                 {enrichedItems.map((item: any, index: number) => (
-                    <div key={`${item.productId}-${index}`} className="flex justify-between items-center bg-gray-50 p-3 rounded">
+                    <div key={`${item.productId}-${index}`} className="flex justify-between items-center bg-surface-hover p-3 rounded-sb">
                         <div>
-                            <div className="font-medium text-gray-800">{item.name}</div>
-                            <div className="text-xs text-gray-500">{item.category}</div>
+                            <div className="font-medium text-ink">{item.name}</div>
+                            <div className="text-xs text-ink-muted">{item.category}</div>
                         </div>
                         <div className="text-right">
-                            <div className="font-semibold text-blue-600">₺{Number(item.price).toFixed(2)}</div>
-                            <div className="text-sm text-gray-600">Adet: {item.quantity}</div>
+                            <div className="font-semibold text-brand">₺{Number(item.price).toFixed(2)}</div>
+                            <div className="text-sm text-ink-muted">Adet: {item.quantity}</div>
                         </div>
                     </div>
                 ))}
             </div>
 
-            <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                <span className="text-lg text-gray-600">Ara Toplam:</span>
-                <span className="text-2xl font-bold text-gray-900">₺{Number(totalPrice).toFixed(2)}</span>
+            <div className="flex justify-between items-center pt-4 border-t border-border">
+                <span className="text-lg text-ink-muted">Ara Toplam:</span>
+                <span className="text-2xl font-bold text-ink">₺{Number(totalPrice).toFixed(2)}</span>
             </div>
 
-            <button className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 rounded transition duration-200">
+            <button className="mt-4 w-full bg-brand hover:bg-brand-hover text-white font-medium py-3 rounded-full transition duration-200">
                 Alışverişi Tamamla
             </button>
         </Card>

@@ -4,24 +4,52 @@ export default {
     theme: {
         extend: {
             colors: {
-                brand: '#1D4ED8',
-                'brand-dark': '#1E40AF',
-                ink: '#111827',
-                muted: '#6B7280',
-                faint: '#9CA3AF',
-                line: '#E5E7EB',
-                'line-strong': '#D1D5DB',
-                canvas: '#F4F5F7',
-                'err-tx': '#B91C1C',
-                'err-bg': '#FEF2F2',
-                'err-line': '#FCA5A5',
+                canvas: '#FFFFFF',
+                surface: {
+                    DEFAULT: '#FFFFFF',
+                    hover: '#F7F8FA',
+                    raised: '#FFFFFF',
+                },
+                border: {
+                    DEFAULT: '#E5E7EB',
+                    strong: '#D1D5DB',
+                },
+                ink: {
+                    DEFAULT: '#0A0A0A',
+                    muted: '#6B7280',
+                    faint: '#9CA3AF',
+                },
+                brand: {
+                    DEFAULT: '#1D4ED8',
+                    hover: '#1E40AF',
+                    soft: '#EFF6FF',
+                },
+                success: { DEFAULT: '#16A34A', soft: '#ECFDF5' },
+                warning: { DEFAULT: '#D97706', soft: '#FFFBEB' },
+                danger: { DEFAULT: '#DC2626', soft: '#FEF2F2' },
+            },
+            fontFamily: {
+                sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
             },
             borderRadius: {
                 card: '12px',
                 btn: '8px',
+                sb: '10px',
+                'sb-lg': '16px',
             },
             boxShadow: {
-                focus: '0 0 0 3px rgba(29,78,216,.12)',
+                focus: '0 0 0 3px rgba(29,78,216,.25)',
+                sb: '0 1px 2px rgba(16,24,40,0.06), 0 0 0 1px rgba(16,24,40,0.04)',
+                'sb-lg': '0 12px 32px -8px rgba(16,24,40,0.16), 0 0 0 1px rgba(16,24,40,0.05)',
+            },
+            keyframes: {
+                'sb-shimmer': {
+                    '0%': { backgroundPosition: '100% 0' },
+                    '100%': { backgroundPosition: '-100% 0' },
+                },
+            },
+            animation: {
+                'sb-shimmer': 'sb-shimmer 1.6s ease infinite',
             },
         },
     },

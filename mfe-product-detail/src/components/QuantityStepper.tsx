@@ -28,8 +28,8 @@ export function QuantityStepper({
     const buttonBaseStyle: React.CSSProperties = {
         width: 40,
         height: '100%',
-        backgroundColor: '#FFFFFF',
-        color: '#111827',
+        backgroundColor: '#1E1E25',
+        color: '#F2F2F5',
         fontSize: 18,
         fontWeight: 600,
         border: 'none',
@@ -41,7 +41,7 @@ export function QuantityStepper({
 
     return (
         <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>Adet</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#F2F2F5' }}>Adet</div>
             <div style={{ height: 8 }} />
             <div
                 role="group"
@@ -49,8 +49,8 @@ export function QuantityStepper({
                 style={{
                     display: 'inline-flex',
                     alignItems: 'center',
-                    border: '1px solid #D1D5DB',
-                    borderRadius: 8,
+                    border: '1px solid #232329',
+                    borderRadius: 10,
                     overflow: 'hidden',
                     height: 40,
                 }}
@@ -60,10 +60,10 @@ export function QuantityStepper({
                     aria-label="Adet azalt"
                     disabled={decrementDisabled}
                     onClick={() => onChange(quantity - 1)}
-                    className={decrementDisabled ? undefined : 'hover:bg-[#F9FAFB]'}
+                    className={decrementDisabled ? undefined : 'hover:bg-surface-hover'}
                     style={{
                         ...buttonBaseStyle,
-                        borderRight: '1px solid #D1D5DB',
+                        borderRight: '1px solid #232329',
                         opacity: decrementDisabled ? 0.5 : 1,
                         cursor: decrementDisabled ? 'not-allowed' : 'pointer',
                     }}
@@ -78,7 +78,7 @@ export function QuantityStepper({
                         textAlign: 'center',
                         fontSize: 14,
                         fontWeight: 600,
-                        color: '#111827',
+                        color: '#F2F2F5',
                         userSelect: 'none',
                         opacity: groupDisabled ? 0.5 : 1,
                     }}
@@ -91,10 +91,10 @@ export function QuantityStepper({
                     aria-label="Adet artır"
                     disabled={incrementDisabled}
                     onClick={() => onChange(quantity + 1)}
-                    className={incrementDisabled ? undefined : 'hover:bg-[#F9FAFB]'}
+                    className={incrementDisabled ? undefined : 'hover:bg-surface-hover'}
                     style={{
                         ...buttonBaseStyle,
-                        borderLeft: '1px solid #D1D5DB',
+                        borderLeft: '1px solid #232329',
                         opacity: incrementDisabled ? 0.5 : 1,
                         cursor: incrementDisabled ? 'not-allowed' : 'pointer',
                     }}

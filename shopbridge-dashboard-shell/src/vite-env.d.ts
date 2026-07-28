@@ -1,5 +1,13 @@
 /// <reference types="vite/client" />
 
+interface ImportMetaEnv {
+    readonly VITE_AUTH_APP_URL?: string;
+}
+
+interface ImportMeta {
+    readonly env: ImportMetaEnv;
+}
+
 declare module 'mfe_orders/Widget';
 declare module 'mfe_cart/Widget';
 declare module 'mfe_payments/Widget';

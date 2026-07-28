@@ -7,7 +7,7 @@ export function AddProductButton({
     return (
         <button
             onClick={() => onNavigate?.('/store/products/new')}
-            className="h-10 rounded-btn font-semibold bg-brand text-white px-4 hover:bg-brand-dark"
+            className="h-10 rounded-full font-semibold bg-brand text-white px-4 hover:bg-brand-dark"
         >
             + Ürün Ekle
         </button>

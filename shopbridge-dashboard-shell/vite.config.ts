@@ -14,6 +14,13 @@ export default defineConfig({
                 mfe_reviews: 'http://localhost:5004/assets/remoteEntry.js',
                 mfe_products: 'http://localhost:5005/assets/remoteEntry.js',
                 mfe_product_detail: 'http://localhost:6010/assets/remoteEntry.js',
+                mfe_product_create: 'http://localhost:6006/assets/remoteEntry.js',
+                // Store* bileşenleri (StoreProducts, StoreOrders, ...) mfe_orders/mfe_products/mfe_reviews'ın
+                // customer Widget'ını sunan (5001/5004/5005) deployment'ında YOK — ayrı, sadece Store*
+                // expose eden kardeş paketlerde (6001/6004/6005). Ayrı remote key ile bağlanır.
+                mfe_orders_store: 'http://localhost:6001/assets/remoteEntry.js',
+                mfe_reviews_store: 'http://localhost:6004/assets/remoteEntry.js',
+                mfe_products_store: 'http://localhost:6005/assets/remoteEntry.js',
             },
             shared: {
                 'react': { singleton: true, requiredVersion: '^18.3.1' },

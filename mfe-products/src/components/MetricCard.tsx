@@ -7,7 +7,7 @@ export function MetricCard({
     value: string | number;
 }) {
     return (
-        <div className="bg-white border border-line rounded-card px-6 py-5">
+        <div className="bg-surface border border-line rounded-card px-6 py-5 shadow-sb">
             <div className="text-muted text-[13px] font-semibold uppercase tracking-[0.06em]">
                 {title}
             </div>

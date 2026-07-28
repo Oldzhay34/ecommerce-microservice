@@ -2,11 +2,11 @@ const currentImports = {};
       const exportSet = new Set(['Module', '__esModule', 'default', '_export_sfc']);
       let moduleMap = {
 "./Widget":()=>{
-      dynamicLoadingCss(["style-BM3G6vFk.css"], false, './Widget');
-      return __federation_import('./__federation_expose_Widget-CZm9jla4.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
+      dynamicLoadingCss(["style-BqXbN8Nn.css"], false, './Widget');
+      return __federation_import('./__federation_expose_Widget-BlempEGZ.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},
 "./ProductReviews":()=>{
-      dynamicLoadingCss(["style-BM3G6vFk.css"], false, './ProductReviews');
-      return __federation_import('./__federation_expose_ProductReviews-CuI76jDW.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
+      dynamicLoadingCss(["style-BqXbN8Nn.css"], false, './ProductReviews');
+      return __federation_import('./__federation_expose_ProductReviews-CCxggxsV.js').then(module =>Object.keys(module).every(item => exportSet.has(item)) ? () => module.default : () => module)},};
       const seen = {};
       const dynamicLoadingCss = (cssFilePaths, dontAppendStylesToHead, exposeItemName) => {
         const metaUrl = import.meta.url;

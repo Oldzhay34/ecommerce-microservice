@@ -14,7 +14,7 @@ export function ProductRow({
     onUpdateStock: (p: Product) => void;
 }) {
     return (
-        <div className="bg-white border border-line rounded-card px-6 py-5 flex items-start justify-between gap-4">
+        <div className="bg-surface border border-line rounded-card px-6 py-5 flex items-start justify-between gap-4 shadow-sb">
         <div className="min-w-0">
         <div className="text-faint text-[11px] uppercase tracking-wide">
             {product.category}
@@ -33,7 +33,7 @@ export function ProductRow({
     </div>
     <button
     onClick={() => onUpdateStock(product)}
-    className="shrink-0 h-9 rounded-btn font-semibold bg-white border border-line-strong text-ink px-3 text-sm"
+    className="shrink-0 h-9 rounded-btn font-semibold bg-surface hover:bg-surface-hover border border-line-strong text-ink px-3 text-sm"
         >
         Stok Güncelle
     </button>

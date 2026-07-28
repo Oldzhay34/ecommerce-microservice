@@ -5,15 +5,15 @@ const NAME_MAX = 120;
 
 const inputCls = (hasError: boolean) =>
     [
-        'w-full h-11 rounded-btn px-3 text-ink outline-none bg-white',
+        'w-full h-11 rounded-btn px-3 text-ink outline-none bg-surface',
         'border',
-        hasError ? 'border-err-line' : 'border-line-strong',
+        hasError ? 'border-danger' : 'border-border-strong',
         'focus:border-brand focus:shadow-focus',
         'disabled:opacity-50 disabled:cursor-not-allowed',
     ].join(' ');
 
 function RequiredMark() {
-    return <span className="text-err-tx"> *</span>;
+    return <span className="text-danger"> *</span>;
 }
 
 export function ProductFormFields({
@@ -49,15 +49,15 @@ export function ProductFormFields({
                 />
                 <div className="flex justify-between gap-3">
                     {nameErr ? (
-                        <p className="text-err-tx text-xs mt-1.5">{nameErr}</p>
+                        <p className="text-danger text-xs mt-1.5">{nameErr}</p>
                     ) : (
-                        <p className="text-muted text-xs mt-1.5">
+                        <p className="text-ink-muted text-xs mt-1.5">
                             Müşterinin arama sonuçlarında göreceği isim.
                         </p>
                     )}
                     <p
                         className={`text-xs mt-1.5 whitespace-nowrap ${
-                            nameLength > NAME_MAX ? 'text-err-tx' : 'text-faint'
+                            nameLength > NAME_MAX ? 'text-danger' : 'text-ink-faint'
                         }`}
                     >
                         {nameLength}/{NAME_MAX}
@@ -79,9 +79,9 @@ export function ProductFormFields({
                     {...register('category')}
                 />
                 {catErr ? (
-                    <p className="text-err-tx text-xs mt-1.5">{catErr}</p>
+                    <p className="text-danger text-xs mt-1.5">{catErr}</p>
                 ) : (
-                    <p className="text-muted text-xs mt-1.5">
+                    <p className="text-ink-muted text-xs mt-1.5">
                         Örn. OTO BAKIM, TEMİZLİK. Büyük harfe çevrilir.
                     </p>
                 )}
@@ -103,9 +103,9 @@ export function ProductFormFields({
                     {...register('price', { valueAsNumber: true })}
                 />
                 {priceErr ? (
-                    <p className="text-err-tx text-xs mt-1.5">{priceErr}</p>
+                    <p className="text-danger text-xs mt-1.5">{priceErr}</p>
                 ) : (
-                    <p className="text-muted text-xs mt-1.5">
+                    <p className="text-ink-muted text-xs mt-1.5">
                         Sıfırdan büyük bir tutar girin. Örn. 149,90
                     </p>
                 )}
@@ -127,9 +127,9 @@ export function ProductFormFields({
                     {...register('stock', { valueAsNumber: true })}
                 />
                 {stockErr ? (
-                    <p className="text-err-tx text-xs mt-1.5">{stockErr}</p>
+                    <p className="text-danger text-xs mt-1.5">{stockErr}</p>
                 ) : (
-                    <p className="text-muted text-xs mt-1.5">
+                    <p className="text-ink-muted text-xs mt-1.5">
                         0 veya daha büyük bir tam sayı girin.
                     </p>
                 )}

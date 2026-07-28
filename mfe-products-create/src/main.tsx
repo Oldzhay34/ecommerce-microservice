@@ -17,7 +17,7 @@ const devSession: StoreSession = {
 ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>
-            <div className="bg-canvas min-h-screen px-6 py-8">
+            <div className="bg-canvas text-ink font-sans min-h-screen px-6 py-8">
                 <StoreProductCreate
                     session={devSession}
                     onNavigate={(p) => alert(`Navigate: ${p}`)}

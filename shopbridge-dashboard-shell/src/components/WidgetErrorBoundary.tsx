@@ -23,9 +23,9 @@ export class WidgetErrorBoundary extends Component<Props, State> {
     public render() {
         if (this.state.hasError) {
             return (
-                <div className="p-6 h-48 border border-gray-200 rounded-lg bg-gray-50 flex flex-col items-center justify-center text-center">
-                    <p className="text-gray-600 font-semibold mb-1">{this.props.widgetName}</p>
-                    <p className="text-sm text-gray-400">Bu bölüm şu anda yüklenemiyor veya erişilemiyor.</p>
+                <div className="p-6 h-48 rounded-sb-lg bg-surface shadow-sb flex flex-col items-center justify-center text-center">
+                    <p className="text-ink font-semibold mb-1">{this.props.widgetName}</p>
+                    <p className="text-sm text-ink-faint">Bu bölüm şu anda yüklenemiyor veya erişilemiyor.</p>
                 </div>
             );
         }

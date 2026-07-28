@@ -15,7 +15,7 @@ export function ProductPicker({
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={isLoading}
-                className="w-full max-w-md h-10 rounded-btn border border-line-strong px-3 text-ink bg-white outline-none focus:border-brand disabled:opacity-50"
+                className="w-full max-w-md h-10 rounded-btn border border-line-strong px-3 text-ink bg-surface outline-none focus:border-brand disabled:opacity-50"
             >
                 <option value="">
                     Değerlendirmelerini görmek istediğiniz ürünü seçin.

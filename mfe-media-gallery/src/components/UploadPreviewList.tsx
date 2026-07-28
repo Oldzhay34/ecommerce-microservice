@@ -31,7 +31,7 @@ export function UploadPreviewList({
                 return (
                     <li
                         key={img.id}
-                        className="flex items-center gap-3 border border-line rounded-btn px-3 py-2 bg-white"
+                        className="flex items-center gap-3 border border-border rounded-sb px-3 py-2 bg-surface"
                     >
                         <img
                             src={img.previewUrl}
@@ -58,7 +58,7 @@ export function UploadPreviewList({
                                         type="button"
                                         onClick={() => onMoveUp(img.id)}
                                         aria-label="Yukarı taşı"
-                                        className="text-muted hover:text-ink text-sm px-2 py-1"
+                                        className="text-ink-muted hover:text-ink text-sm px-2 py-1"
                                     >
                                         ↑
                                     </button>
@@ -67,7 +67,7 @@ export function UploadPreviewList({
                                     type="button"
                                     onClick={() => onRemove(img.id)}
                                     aria-label="Kaldır"
-                                    className="text-muted hover:text-err-tx text-sm px-2 py-1"
+                                    className="text-ink-muted hover:text-danger text-sm px-2 py-1"
                                 >
                                     ✕
                                 </button>
@@ -88,13 +88,13 @@ function StatusLine({
     sizeBytes: number;
 }) {
     if (!result || result.status === 'pending') {
-        return <p className="text-faint text-xs mt-0.5">{formatBytes(sizeBytes)}</p>;
+        return <p className="text-ink-faint text-xs mt-0.5">{formatBytes(sizeBytes)}</p>;
     }
     if (result.status === 'uploading') {
-        return <p className="text-muted text-xs mt-0.5">Yükleniyor…</p>;
+        return <p className="text-ink-muted text-xs mt-0.5">Yükleniyor…</p>;
     }
     if (result.status === 'success') {
-        return <p className="text-xs mt-0.5 text-green-600">Yüklendi</p>;
+        return <p className="text-xs mt-0.5 text-success">Yüklendi</p>;
     }
-    return <p className="text-err-tx text-xs mt-0.5">{result.message}</p>;
+    return <p className="text-danger text-xs mt-0.5">{result.message}</p>;
 }

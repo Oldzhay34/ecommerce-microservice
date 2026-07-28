@@ -12,11 +12,11 @@ export function StarRating({
     const sizeCls = size === 'lg' ? 'w-5 h-5' : size === 'md' ? 'w-4 h-4' : 'w-3.5 h-3.5';
 
     return (
-        <div className="flex text-yellow-400" role="img" aria-label={`${rating} / 5 yıldız`}>
+        <div className="flex text-warning" role="img" aria-label={`${rating} / 5 yıldız`}>
             {[...Array(5)].map((_, i) => (
                 <svg
                     key={i}
-                    className={`${sizeCls} ${i < rating ? 'fill-current' : 'text-gray-300 fill-current'}`}
+                    className={`${sizeCls} ${i < rating ? 'fill-current' : 'text-ink-faint fill-current'}`}
                     viewBox="0 0 20 20"
                     aria-hidden="true"
                 >

@@ -29,6 +29,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/products/search").permitAll()
+                        // Prometheus JWT ile authenticate olamaz; scrape endpoint'i public olmali.
+                        .requestMatchers("/actuator/health", "/actuator/prometheus", "/actuator/metrics").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtResourceFilter, UsernamePasswordAuthenticationFilter.class);

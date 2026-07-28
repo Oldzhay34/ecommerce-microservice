@@ -9,10 +9,9 @@ export interface CategoryBadgeProps {
 export function CategoryBadge({ category }: CategoryBadgeProps) {
     return (
         <span
-            style={{
+            className="bg-brand/10 text-brand"
+        style={{
         display: 'inline-block',
-            backgroundColor: '#EFF6FF',
-            color: '#1D4ED8',
             borderRadius: 999,
             padding: '4px 10px',
             fontSize: 12,

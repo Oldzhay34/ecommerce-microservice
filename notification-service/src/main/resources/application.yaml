@@ -1,6 +1,13 @@
+server:
+  # NOT: spring.main.web-application-type=none iken management.server.port farklı bir
+  # port belirtse de Spring Boot 3.3.4'te ayrı bir management context/embedded Tomcat
+  # BAŞLAMIYOR (denendi, doğrulandı — hiçbir web sunucusu ayağa kalkmıyor). Bu yüzden
+  # web-application-type: none KALDIRILDI; uygulama artık bu tek port üzerinden normal
+  # bir servlet app'i olarak çalışıyor, sadece actuator (health/prometheus/metrics)
+  # sunmak için — RabbitMQ tüketimi/iş mantığı bundan etkilenmiyor.
+  port: 8090
+
 spring:
-  main:
-    web-application-type: none
   datasource:
     url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:notification_db}
     username: ${DB_USER:postgres}
@@ -49,3 +56,18 @@ rabbitmq:
     otp-dlq: notification.email.otp.dlq
   routing-key:
     otp: auth.event.otp
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: never
+  metrics:
+    tags:
+      application: notification-service
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true

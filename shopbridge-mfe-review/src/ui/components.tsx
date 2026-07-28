@@ -1,25 +1,25 @@
 import React from 'react';
 
 export const Card = ({ children, className = '' }: { children: React.ReactNode, className?: string }) => (
-    <div className={`bg-white border rounded-lg shadow-sm p-4 ${className}`}>
+    <div className={`bg-surface border border-border rounded-sb-lg shadow-sb p-4 ${className}`}>
         {children}
     </div>
 );
 
 export const Button = ({ children, onClick, variant = 'primary', type = 'button' }: { children: React.ReactNode, onClick?: () => void, variant?: 'primary' | 'danger' | 'secondary', type?: 'button' | 'submit' }) => {
-    const base = "px-4 py-2 rounded text-sm font-medium transition-colors";
+    const base = "px-4 py-2 text-sm font-medium transition-colors";
     const variants = {
-        primary: "bg-blue-600 text-white hover:bg-blue-700",
-        danger: "bg-red-500 text-white hover:bg-red-600",
-        secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300"
+        primary: "rounded-full bg-brand text-white hover:bg-brand-hover",
+        danger: "rounded-sb bg-danger text-white hover:bg-danger/90",
+        secondary: "rounded-sb bg-surface-hover text-ink hover:bg-surface-raised"
     };
     return <button type={type} onClick={onClick} className={`${base} ${variants[variant]}`}>{children}</button>;
 };
 
 export const ErrorBanner = ({ message }: { message: string }) => (
-    <div className="p-4 bg-red-50 text-red-700 border-l-4 border-red-500 rounded-r">{message}</div>
+    <div className="p-4 bg-danger/10 text-danger border-l-4 border-danger rounded-r-sb">{message}</div>
 );
 
 export const Skeleton = ({ height = 'h-32' }: { height?: string }) => (
-    <div className={`w-full ${height} bg-gray-200 animate-pulse rounded-lg`}></div>
+    <div className={`w-full ${height} bg-surface animate-pulse rounded-sb-lg`}></div>
 );
