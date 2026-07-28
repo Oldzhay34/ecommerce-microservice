@@ -49,8 +49,7 @@ class MediaUploadSubsystemTest extends AbstractMediaSubsystemTest {
 
     @BeforeEach
     void resetState() {
-        outboxEventRepository.deleteAll();
-        mediaAssetRepository.deleteAll();
+        resetDatabase();
         productId = UUID.randomUUID();
         storeId = UUID.randomUUID();
     }

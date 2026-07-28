@@ -7,8 +7,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.dao.DataAccessException;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -24,21 +23,26 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * yapmadigini degil).
  * <p>
  * <b>CALISTIRMA ONKOSULU: Docker.</b>
+ * <p>
+ * <b>Beklenen exception tipi hakkinda:</b> trigger'lar {@code RAISE EXCEPTION} kullanir,
+ * bu da SQLSTATE {@code P0001} (raise_exception) uretir. Spring'in varsayilan
+ * {@code SQLStateSQLExceptionTranslator}'i "P0" sinifini bilmedigi icin bunu
+ * {@code DataIntegrityViolationException}'a DEGIL, {@link DataAccessException}'in bir
+ * alt tipi olan {@code UncategorizedSQLException}'a cevirir. Asil kanit zaten trigger'in
+ * kendi mesajidir; bu yuzden tip iddiasi {@link DataAccessException} seviyesinde tutulur.
  */
 @EnabledIf("com.mediaservice.support.DockerAvailability#isDockerAvailable")
 @DisplayName("SUBSYSTEM - Guvenlik trigger'lari (Postgres, uygulama katmani bypass edilerek)")
 class SecurityTriggersSubsystemTest extends AbstractMediaSubsystemTest {
 
     @Autowired private MediaCommandUseCase commandUseCase;
-    @Autowired private JdbcTemplate jdbcTemplate;
 
     private UUID productId;
     private UUID storeId;
 
     @BeforeEach
     void resetState() {
-        jdbcTemplate.update("DELETE FROM outbox_event");
-        jdbcTemplate.update("DELETE FROM media_asset");
+        resetDatabase();
         productId = UUID.randomUUID();
         storeId = UUID.randomUUID();
     }
@@ -50,7 +54,7 @@ class SecurityTriggersSubsystemTest extends AbstractMediaSubsystemTest {
                 productId, storeId, false, "image/png", MediaTestFixtures.validPngBytes());
 
         assertThatThrownBy(() -> jdbcTemplate.update("DELETE FROM media_asset WHERE id = ?", asset.getId()))
-                .isInstanceOf(DataIntegrityViolationException.class)
+                .isInstanceOf(DataAccessException.class)
                 .hasMessageContaining("fiziksel olarak silinemez");
     }
 
@@ -61,7 +65,7 @@ class SecurityTriggersSubsystemTest extends AbstractMediaSubsystemTest {
                 "INSERT INTO outbox_event (id, aggregate_type, aggregate_id, event_type, routing_key, payload, processed, created_at) " +
                         "VALUES (?, 'MediaAsset', ?, 'MediaUploadedEvent', 'media.uploaded', ?, false, ?)",
                 UUID.randomUUID(), productId, "{this is not json", java.sql.Timestamp.from(Instant.now())))
-                .isInstanceOf(DataIntegrityViolationException.class)
+                .isInstanceOf(DataAccessException.class)
                 .hasMessageContaining("gecerli JSON");
     }
 
@@ -76,7 +80,7 @@ class SecurityTriggersSubsystemTest extends AbstractMediaSubsystemTest {
                         "VALUES (?, ?, ?, 'https://cdn.test/a.webp', 'https://cdn.test/t.webp', 'https://cdn.test/o.webp', " +
                         "'k', 'kt', 'km', 'ko', 'image/webp', -1, 10, 10, 0, false, 'ACTIVE', ?, 0)",
                 assetId, productId, storeId, java.sql.Timestamp.from(Instant.now())))
-                .isInstanceOf(DataIntegrityViolationException.class)
+                .isInstanceOf(DataAccessException.class)
                 .hasMessageContaining("pozitif olmalidir");
     }
 

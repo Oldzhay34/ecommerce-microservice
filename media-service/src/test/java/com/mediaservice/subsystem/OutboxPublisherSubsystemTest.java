@@ -2,7 +2,6 @@ package com.mediaservice.subsystem;
 
 import com.mediaservice.application.port.in.MediaCommandUseCase;
 import com.mediaservice.infrastructure.config.RabbitMqConfig;
-import com.mediaservice.infrastructure.persistence.repository.MediaAssetRepository;
 import com.mediaservice.infrastructure.persistence.repository.OutboxEventRepository;
 import com.mediaservice.support.MediaTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,6 @@ import static org.awaitility.Awaitility.await;
 class OutboxPublisherSubsystemTest extends AbstractMediaSubsystemTest {
 
     @Autowired private MediaCommandUseCase commandUseCase;
-    @Autowired private MediaAssetRepository mediaAssetRepository;
     @Autowired private OutboxEventRepository outboxEventRepository;
     @Autowired private RabbitTemplate rabbitTemplate;
 
@@ -40,8 +38,7 @@ class OutboxPublisherSubsystemTest extends AbstractMediaSubsystemTest {
 
     @BeforeEach
     void resetState() {
-        outboxEventRepository.deleteAll();
-        mediaAssetRepository.deleteAll();
+        resetDatabase();
         productId = UUID.randomUUID();
         storeId = UUID.randomUUID();
     }

@@ -2,7 +2,9 @@ package com.mediaservice.subsystem;
 
 import com.mediaservice.support.JwtTestTokens;
 import com.mediaservice.support.MediaTestInfrastructure;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 
@@ -25,6 +27,10 @@ import org.springframework.test.context.DynamicPropertySource;
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class AbstractMediaSubsystemTest {
+
+    /** Testlerin uygulama katmanini bypass edip DB durumunu dogrudan hazirlamasi/dogrulamasi icin. */
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
 
     @DynamicPropertySource
     static void overrideProperties(DynamicPropertyRegistry registry) {
@@ -49,5 +55,30 @@ public abstract class AbstractMediaSubsystemTest {
 
         // Testler kendi imzali token'larini uretebilsin diye secret sabitlenir.
         registry.add("app.security.jwt-secret", () -> JwtTestTokens.SECRET);
+    }
+
+    /**
+     * Testler arasi izolasyon: outbox + media_asset tablolarini bosaltir.
+     * <p>
+     * V2__security_triggers.sql, {@code media_asset} uzerinde fiziksel DELETE'i
+     * {@code trg_media_asset_block_delete} ile tamamen yasakladigi icin sade bir
+     * {@code deleteAll()} ARTIK CALISMAZ (bu, uretimde istenen davranistir). Test
+     * temizligi bu yuzden trigger'i yalnizca silme suresince devre disi birakir;
+     * container tek bir test kosusuna ait oldugu ve trigger {@code finally} icinde
+     * geri acildigi icin guvenlik garantisi testler arasinda korunur.
+     */
+    protected void resetDatabase() {
+        jdbcTemplate.update("DELETE FROM outbox_event");
+        hardDeleteAllMediaAssets();
+    }
+
+    /** Soft-delete sozlesmesini KASITLI olarak bypass eden fiziksel silme (yalnizca test kurulumu icin). */
+    protected void hardDeleteAllMediaAssets() {
+        jdbcTemplate.execute("ALTER TABLE media_asset DISABLE TRIGGER trg_media_asset_block_delete");
+        try {
+            jdbcTemplate.update("DELETE FROM media_asset");
+        } finally {
+            jdbcTemplate.execute("ALTER TABLE media_asset ENABLE TRIGGER trg_media_asset_block_delete");
+        }
     }
 }

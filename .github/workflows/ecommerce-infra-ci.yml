@@ -1,9 +1,16 @@
 name: Ecommerce Infra CI
 
-# ecommerce-infra sadece paylasilan altyapiyi (RabbitMQ, Elasticsearch, Redis)
-# tanimlayan bir compose dosyasidir; Java kodu icermez. Bu yuzden burada birim
-# testi degil, compose dosyasinin gecerliligini ve stack'in gercekten saglikli
-# ayaga kalktigini dogrulayan bir smoke testi kosuyoruz.
+# ecommerce-infra sadece paylasilan altyapiyi (RabbitMQ, Elasticsearch, Redis,
+# Prometheus, Grafana) tanimlayan bir compose dosyasidir; Java kodu icermez. Bu
+# yuzden burada birim testi degil, compose dosyasinin gecerliligini ve stack'in
+# gercekten saglikli ayaga kalktigini dogrulayan bir smoke testi kosuyoruz.
+#
+# Gozlemlenebilirlik katmani (prometheus/ + grafana/) icin ekstra olarak:
+#   - prometheus.yml ve Grafana provisioning dosyalarinin sozdizimi,
+#   - Prometheus'un config'i GERCEKTEN yukledigi ve rabbitmq_prometheus
+#     plugin'ini gercekten scrape edebildigi,
+#   - Grafana'nin datasource + dashboard provisioning'inin GERCEKTEN uygulandigi
+# dogrulanir.
 
 on:
   push:
@@ -28,6 +35,8 @@ env:
   # kimlik bilgileridir, hicbir gercek ortamda kullanilmaz.
   RABBITMQ_USER: ci_user
   RABBITMQ_PASSWORD: ci_password
+  GRAFANA_ADMIN_USER: ci_admin
+  GRAFANA_ADMIN_PASSWORD: ci_admin_password
   COMPOSE_NETWORK: ecommerce-shared-network
 
 jobs:
@@ -44,6 +53,8 @@ jobs:
           cat > .env <<EOF
           RABBITMQ_USER=${RABBITMQ_USER}
           RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+          GRAFANA_ADMIN_USER=${GRAFANA_ADMIN_USER}
+          GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
           EOF
 
       - name: Validate compose syntax
@@ -71,6 +82,35 @@ jobs:
                   print(f"  - {p}")
               sys.exit(1)
           print(f"Compose lint OK ({len(cfg.get('services') or {})} servis)")
+          PY
+
+      - name: Validate observability config files
+        # prometheus.yml'i Prometheus'un KENDI parser'i (promtool) ile dogrula; ayrica
+        # Grafana provisioning dosyalari ve dashboard JSON'lari sozdizimsel olarak
+        # gecerli olmali - bozuk bir dosya Grafana'yi calistirmadan once yakalanir.
+        run: |
+          set -e
+          docker run --rm -v "$PWD/prometheus:/cfg:ro" \
+            --entrypoint promtool prom/prometheus:v2.55.1 check config /cfg/prometheus.yml
+          python3 - <<'PY'
+          import json, pathlib, sys, yaml
+          problems = []
+          for path in sorted(pathlib.Path("grafana/provisioning").rglob("*")):
+              if not path.is_file():
+                  continue
+              try:
+                  if path.suffix in (".yml", ".yaml"):
+                      yaml.safe_load(path.read_text(encoding="utf-8"))
+                  elif path.suffix == ".json":
+                      json.loads(path.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  problems.append(f"{path}: {exc}")
+          if problems:
+              print("Grafana provisioning hatalari:")
+              for p in problems:
+                  print(f"  - {p}")
+              sys.exit(1)
+          print("Grafana provisioning dosyalari gecerli")
           PY
 
       - name: Create external shared network
@@ -111,6 +151,79 @@ jobs:
           value=$(docker exec ecommerce-redis redis-cli get ci:smoke)
           [ "$value" = "ok" ] || { echo "Redis set/get basarisiz: $value" >&2; exit 1; }
           echo "Redis OK (ping + set/get)"
+
+      - name: Smoke test - Prometheus
+        run: |
+          set -e
+          curl -fsS http://localhost:9090/-/healthy > /dev/null
+          curl -fsS http://localhost:9090/-/ready > /dev/null
+
+          # Repodaki prometheus.yml'de tanimli her job, calisan Prometheus'ta
+          # GERCEKTEN kayitli olmali (mount edilmemis/eski config'i yakalar).
+          python3 - <<'PY'
+          import json, sys, urllib.request, yaml
+          expected = {j["job_name"] for j in yaml.safe_load(
+              open("prometheus/prometheus.yml", encoding="utf-8"))["scrape_configs"]}
+          with urllib.request.urlopen("http://localhost:9090/api/v1/targets") as r:
+              data = json.load(r)["data"]
+          actual = {t["labels"]["job"] for t in data["activeTargets"]}
+          missing = expected - actual
+          if missing:
+              print(f"Prometheus'ta eksik job'lar: {sorted(missing)}")
+              sys.exit(1)
+          print(f"Prometheus {len(expected)} job'in tamamini yukledi: {sorted(expected)}")
+          PY
+          echo "Prometheus OK (9090)"
+
+      - name: Smoke test - Prometheus gercekten scrape ediyor (rabbitmq + self)
+        # Bu stack'te yalnizca rabbitmq ve prometheus ayakta; mikroservis hedefleri
+        # dogal olarak DOWN olur. Bu yuzden sadece bu iki job'in UP olmasi beklenir -
+        # bu, rabbitmq_prometheus plugin'inin ve scrape yolunun GERCEKTEN calistiginin
+        # kanitidir.
+        run: |
+          set -e
+          # Plugin'in metrik ucunu once dogrudan dogrula.
+          curl -fsS -o /dev/null http://localhost:15692/metrics
+
+          for attempt in $(seq 1 30); do
+            up=$(curl -fsS 'http://localhost:9090/api/v1/query?query=up{job=~"rabbitmq|prometheus"}' \
+                 | python3 -c 'import json,sys; print(sum(int(r["value"][1]) for r in json.load(sys.stdin)["data"]["result"]))')
+            if [ "$up" = "2" ]; then
+              echo "Prometheus scrape OK (rabbitmq + prometheus UP)"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "rabbitmq/prometheus hedefleri 150s icinde UP olmadi (up toplami=$up)" >&2
+          curl -fsS http://localhost:9090/api/v1/targets | head -c 4000 >&2
+          exit 1
+
+      - name: Smoke test - Grafana
+        run: |
+          set -e
+          auth="${GRAFANA_ADMIN_USER}:${GRAFANA_ADMIN_PASSWORD}"
+
+          db=$(curl -fsS http://localhost:3300/api/health \
+               | python3 -c 'import json,sys; print(json.load(sys.stdin)["database"])')
+          [ "$db" = "ok" ] || { echo "Grafana database durumu: $db" >&2; exit 1; }
+
+          # Provisioning GERCEKTEN uygulanmis mi: datasource + dashboard mevcut olmali.
+          ds_uid=$(curl -fsS -u "$auth" http://localhost:3300/api/datasources/name/Prometheus \
+                   | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["uid"])')
+          # Dashboard provisioner dosyalari periyodik tarar; kisa bir tolerans birakilir.
+          for attempt in $(seq 1 12); do
+            if curl -fsS -u "$auth" http://localhost:3300/api/dashboards/uid/shopbridge-overview > /dev/null; then
+              break
+            fi
+            [ "$attempt" = "12" ] && { echo "shopbridge-overview dashboard'i provision edilmedi" >&2; exit 1; }
+            sleep 5
+          done
+
+          # Grafana -> Prometheus baglantisi gercekten kuruluyor mu (proxy uzerinden).
+          curl -fsS -u "$auth" \
+            "http://localhost:3300/api/datasources/proxy/uid/${ds_uid}/api/v1/query?query=up" \
+            | python3 -c 'import json,sys; assert json.load(sys.stdin)["status"]=="success"'
+          echo "Grafana OK (3300; datasource + dashboard provision edildi, Prometheus'a proxy calisiyor)"
 
       - name: Dump container logs on failure
         if: failure()

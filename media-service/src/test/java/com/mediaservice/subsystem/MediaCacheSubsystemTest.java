@@ -3,8 +3,6 @@ package com.mediaservice.subsystem;
 import com.mediaservice.api.dto.MediaAssetResponse;
 import com.mediaservice.application.port.in.MediaCommandUseCase;
 import com.mediaservice.application.port.in.MediaQueryUseCase;
-import com.mediaservice.infrastructure.persistence.repository.MediaAssetRepository;
-import com.mediaservice.infrastructure.persistence.repository.OutboxEventRepository;
 import com.mediaservice.support.MediaTestFixtures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -31,8 +29,6 @@ class MediaCacheSubsystemTest extends AbstractMediaSubsystemTest {
 
     @Autowired private MediaCommandUseCase commandUseCase;
     @Autowired private MediaQueryUseCase queryUseCase;
-    @Autowired private MediaAssetRepository mediaAssetRepository;
-    @Autowired private OutboxEventRepository outboxEventRepository;
     @Autowired private RedisTemplate<String, Object> redisTemplate;
 
     private UUID productId;
@@ -40,8 +36,7 @@ class MediaCacheSubsystemTest extends AbstractMediaSubsystemTest {
 
     @BeforeEach
     void resetState() {
-        outboxEventRepository.deleteAll();
-        mediaAssetRepository.deleteAll();
+        resetDatabase();
         redisTemplate.getConnectionFactory().getConnection().flushDb();
         productId = UUID.randomUUID();
         storeId = UUID.randomUUID();
@@ -67,7 +62,8 @@ class MediaCacheSubsystemTest extends AbstractMediaSubsystemTest {
 
         // Kanit: DB satirini use case'i bypass ederek DOGRUDAN silersek, cache hit hala
         // eski (dogru) sonucu donduruyorsa okuma GERCEKTEN Redis'ten geliyor demektir.
-        mediaAssetRepository.deleteAll();
+        // (Fiziksel silme trigger ile yasakli oldugu icin test-only bypass kullanilir.)
+        hardDeleteAllMediaAssets();
 
         List<MediaAssetResponse> secondCall = queryUseCase.getProductMedia(productId);
         assertThat(secondCall).hasSize(1);
