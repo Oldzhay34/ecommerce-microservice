@@ -185,12 +185,20 @@ jobs:
           # Plugin'in metrik ucunu once dogrudan dogrula.
           curl -fsS -o /dev/null http://localhost:15692/metrics
 
+          # PromQL ifadesi {, }, " ve | icerir; bunlar URL'de ham gonderilemez
+          # (Prometheus 400 doner). -G + --data-urlencode ile curl'un kendisi encode eder.
+          # Ayrica curl ciktisi once degiskene alinir: "curl | python3" boru hattinda
+          # curl'un hata kodu kaybolur ve gercek hata JSON parse hatasi gibi gorunur.
+          up=0
           for attempt in $(seq 1 30); do
-            up=$(curl -fsS 'http://localhost:9090/api/v1/query?query=up{job=~"rabbitmq|prometheus"}' \
-                 | python3 -c 'import json,sys; print(sum(int(r["value"][1]) for r in json.load(sys.stdin)["data"]["result"]))')
-            if [ "$up" = "2" ]; then
-              echo "Prometheus scrape OK (rabbitmq + prometheus UP)"
-              exit 0
+            if body=$(curl -fsS -G http://localhost:9090/api/v1/query \
+                        --data-urlencode 'query=up{job=~"rabbitmq|prometheus"}'); then
+              up=$(printf '%s' "$body" \
+                   | python3 -c 'import json,sys; print(sum(int(r["value"][1]) for r in json.load(sys.stdin)["data"]["result"]))')
+              if [ "$up" = "2" ]; then
+                echo "Prometheus scrape OK (rabbitmq + prometheus UP)"
+                exit 0
+              fi
             fi
             sleep 5
           done

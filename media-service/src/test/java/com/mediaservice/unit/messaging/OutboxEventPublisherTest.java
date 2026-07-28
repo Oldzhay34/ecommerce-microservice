@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -74,6 +75,12 @@ class OutboxEventPublisherTest {
         OutboxEventJpaEntity ok = entity("media.uploaded");
         OutboxEventJpaEntity failing = entity("media.deleted");
         when(repository.lockUnprocessedBatch(100)).thenReturn(List.of(ok, failing));
+        // Basarili yol da ACIKCA stub'lanmali: MockitoExtension STRICT_STUBS ile calisir ve
+        // ayni metodun stub'lanmamis argumanlarla cagrilmasi PotentialStubbingProblem
+        // firlatir. Bu stub olmadan "ok" event'inin yayini da hata alir ve test, olcmek
+        // istedigi kismi-hata senaryosu yerine "hicbiri yayinlanmadi" durumunu olcer.
+        doNothing()
+                .when(rabbitTemplate).send(eq(RabbitMqConfig.MEDIA_EXCHANGE), eq("media.uploaded"), any(Message.class));
         doThrow(new RuntimeException("broker unreachable"))
                 .when(rabbitTemplate).send(eq(RabbitMqConfig.MEDIA_EXCHANGE), eq("media.deleted"), any(Message.class));
 

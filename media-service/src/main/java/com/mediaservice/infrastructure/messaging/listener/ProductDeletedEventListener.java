@@ -6,12 +6,11 @@ import com.mediaservice.application.port.in.MediaCommandUseCase;
 import com.mediaservice.infrastructure.config.RabbitMqConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
-import org.springframework.amqp.support.AmqpHeaders;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
 /**
@@ -44,11 +43,21 @@ public class ProductDeletedEventListener {
      * tukenirse media.dlx uzerinden DLQ'ya dusuruilur.
      *
      * Idempotent: softDeleteAllByProduct zaten ACTIVE kayit yoksa hicbir sey yapmaz.
+     * <p>
+     * Parametre bilerek HAM {@link Message}'dir, {@code @Payload byte[]} DEGILDIR:
+     * bean olarak tanimli {@code Jackson2JsonMessageConverter}, {@code application/json}
+     * content-type'li bir mesaji once bir Java nesnesine cevirir (tip ipucu yoksa
+     * {@code Map}, {@code __TypeId__} varsa o tipe) ve sonrasinda {@code byte[]}'a
+     * donusturulemedigi icin MessageConversionException firlatilirdi - yani gercek bir
+     * product-service'in bastigi her JSON mesaj DLQ'ya duserdi. Ham Message parametresi
+     * payload donusumunu tamamen devre disi birakir; JSON'i zaten asagida ObjectMapper
+     * ile kendimiz okuyoruz (bkz. OutboxEventPublisher.buildMessage - yayin tarafi da
+     * ayni sekilde ham byte + content-type json basar).
      */
     @RabbitListener(queues = RabbitMqConfig.QUEUE_PRODUCT_DELETED)
-    public void onProductDeleted(@Payload byte[] rawPayload,
-                                 @Header(name = AmqpHeaders.MESSAGE_ID, required = false) String messageId) {
-        String payload = new String(rawPayload);
+    public void onProductDeleted(Message message) {
+        String payload = new String(message.getBody(), StandardCharsets.UTF_8);
+        String messageId = message.getMessageProperties().getMessageId();
         try {
             JsonNode node = objectMapper.readTree(payload);
             JsonNode productIdNode = node.get("productId");

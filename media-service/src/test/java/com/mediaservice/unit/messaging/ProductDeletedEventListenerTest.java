@@ -11,6 +11,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.core.MessageBuilder;
+import org.springframework.amqp.core.MessageProperties;
+
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 
@@ -39,13 +43,26 @@ class ProductDeletedEventListenerTest {
         listener = new ProductDeletedEventListener(commandUseCase, new ObjectMapper());
     }
 
+    /**
+     * Gercek bir yayincinin (product-service veya media-service'in kendi
+     * OutboxEventPublisher'i) bastigi mesajin AYNISI: ham JSON govde +
+     * content-type application/json, tip ipucu header'i YOK.
+     */
+    private static Message jsonMessage(String json) {
+        return MessageBuilder.withBody(json.getBytes(StandardCharsets.UTF_8))
+                .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                .setContentEncoding(StandardCharsets.UTF_8.name())
+                .setMessageId(UUID.randomUUID().toString())
+                .build();
+    }
+
     @Test
     @DisplayName("U1: onProductDeleted - Gecerli payload icin softDeleteAllByProduct dogru productId ile cagirilir")
     void onProductDeleted_WhenValidPayload_ShouldSoftDeleteByProduct() {
         UUID productId = UUID.randomUUID();
-        byte[] payload = MediaTestFixtures.productDeletedPayload(productId).getBytes(StandardCharsets.UTF_8);
+        Message payload = jsonMessage(MediaTestFixtures.productDeletedPayload(productId));
 
-        listener.onProductDeleted(payload, "msg-1");
+        listener.onProductDeleted(payload);
 
         verify(commandUseCase).softDeleteAllByProduct(productId);
     }
@@ -53,9 +70,9 @@ class ProductDeletedEventListenerTest {
     @Test
     @DisplayName("U2: onProductDeleted - productId eksikse mesaj sessizce atlanir, use case cagrilmaz, exception firlamaz")
     void onProductDeleted_WhenProductIdMissing_ShouldSkipSilently() {
-        byte[] payload = MediaTestFixtures.productDeletedPayloadMissingProductId().getBytes(StandardCharsets.UTF_8);
+        Message payload = jsonMessage(MediaTestFixtures.productDeletedPayloadMissingProductId());
 
-        assertThatCode(() -> listener.onProductDeleted(payload, "msg-2")).doesNotThrowAnyException();
+        assertThatCode(() -> listener.onProductDeleted(payload)).doesNotThrowAnyException();
 
         verify(commandUseCase, never()).softDeleteAllByProduct(any());
     }
@@ -63,9 +80,9 @@ class ProductDeletedEventListenerTest {
     @Test
     @DisplayName("U3: onProductDeleted - productId gecersiz UUID ise mesaj DUSURULUR (retry anlamsiz), exception firlamaz")
     void onProductDeleted_WhenProductIdInvalid_ShouldDropWithoutThrowing() {
-        byte[] payload = MediaTestFixtures.productDeletedPayloadInvalidProductId().getBytes(StandardCharsets.UTF_8);
+        Message payload = jsonMessage(MediaTestFixtures.productDeletedPayloadInvalidProductId());
 
-        assertThatCode(() -> listener.onProductDeleted(payload, "msg-3")).doesNotThrowAnyException();
+        assertThatCode(() -> listener.onProductDeleted(payload)).doesNotThrowAnyException();
 
         verify(commandUseCase, never()).softDeleteAllByProduct(any());
     }
@@ -74,11 +91,11 @@ class ProductDeletedEventListenerTest {
     @DisplayName("U4: onProductDeleted - use case beklenmedik hata firlatirsa IllegalStateException'a sarilir (RETRY sinyali)")
     void onProductDeleted_WhenUseCaseThrows_ShouldWrapAsIllegalStateExceptionForRetry() {
         UUID productId = UUID.randomUUID();
-        byte[] payload = MediaTestFixtures.productDeletedPayload(productId).getBytes(StandardCharsets.UTF_8);
+        Message payload = jsonMessage(MediaTestFixtures.productDeletedPayload(productId));
         org.mockito.Mockito.doThrow(new RuntimeException("db down"))
                 .when(commandUseCase).softDeleteAllByProduct(productId);
 
-        assertThatThrownBy(() -> listener.onProductDeleted(payload, "msg-4"))
+        assertThatThrownBy(() -> listener.onProductDeleted(payload))
                 .isInstanceOf(IllegalStateException.class);
     }
 }

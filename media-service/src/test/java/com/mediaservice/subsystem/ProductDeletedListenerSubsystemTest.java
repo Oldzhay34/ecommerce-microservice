@@ -11,10 +11,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIf;
+import org.springframework.amqp.core.MessageBuilder;
+import org.springframework.amqp.core.MessageProperties;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.RedisTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
@@ -61,9 +64,23 @@ class ProductDeletedListenerSubsystemTest extends AbstractMediaSubsystemTest {
         storeId = UUID.randomUUID();
     }
 
-    /** product-service'in (yayinlarsa) yapacagi gibi ham AMQP mesaji basar - uygulamanin RabbitTemplate bean'i uzerinden DEGIL, gercek broker'a. */
+    /**
+     * product-service'in (yayinlarsa) yapacagi gibi ham AMQP mesaji basar.
+     * <p>
+     * KASITLI olarak {@code convertAndSend(String)} DEGIL {@code send(Message)} kullanilir:
+     * ilki uygulamanin Jackson2JsonMessageConverter'indan gecer ve JSON'i bir kez daha
+     * string olarak sarmalayip {@code __TypeId__: java.lang.String} header'i ekler - yani
+     * disaridaki bir servisin ASLA gondermeyecegi bir mesaj uretir. Buradaki sekil,
+     * media-service'in kendi OutboxEventPublisher.buildMessage'i ile birebir aynidir:
+     * ham JSON govde + content-type application/json.
+     */
     private void publishProductDeletedFromExternalService(String payload) {
-        rabbitTemplate.convertAndSend(RabbitMqConfig.PRODUCT_EXCHANGE, RabbitMqConfig.RK_PRODUCT_DELETED, payload);
+        rabbitTemplate.send(RabbitMqConfig.PRODUCT_EXCHANGE, RabbitMqConfig.RK_PRODUCT_DELETED,
+                MessageBuilder.withBody(payload.getBytes(StandardCharsets.UTF_8))
+                        .setContentType(MessageProperties.CONTENT_TYPE_JSON)
+                        .setContentEncoding(StandardCharsets.UTF_8.name())
+                        .setMessageId(UUID.randomUUID().toString())
+                        .build());
     }
 
     @Test
