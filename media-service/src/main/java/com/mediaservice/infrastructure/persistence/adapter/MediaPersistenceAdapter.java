@@ -62,6 +62,11 @@ public class MediaPersistenceAdapter implements MediaCommandPort, MediaQueryPort
     }
 
     @Override
+    public void flush() {
+        repository.flush();
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public long countActiveByProductId(UUID productId) {
         return repository.countActiveByProductId(productId);

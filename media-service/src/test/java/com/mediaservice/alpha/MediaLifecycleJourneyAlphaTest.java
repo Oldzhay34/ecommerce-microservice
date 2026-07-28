@@ -8,7 +8,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -51,16 +50,11 @@ class MediaLifecycleJourneyAlphaTest extends AbstractMediaAlphaTest {
             new ParameterizedTypeReference<>() {
             };
 
-    private String upload(UUID productId, UUID storeId, byte[] bytes) {
+    private String upload(UUID productId, UUID storeId, byte[] bytes, String contentType) {
         HttpHeaders headers = authHeaders(storeId, "STORE");
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new ByteArrayResource(bytes) {
-            @Override
-            public String getFilename() {
-                return "image";
-            }
-        });
+        body.add("file", MediaTestFixtures.filePart(bytes, contentType, "image"));
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 "/api/v1/media/products/{productId}/images", HttpMethod.POST,
@@ -85,9 +79,9 @@ class MediaLifecycleJourneyAlphaTest extends AbstractMediaAlphaTest {
         // once dinleyen olmadan basilan mesaji kaybeder).
         ListenerHandle uploadedListener = bindQueue(RabbitMqConfig.RK_MEDIA_UPLOADED);
 
-        String first = upload(productId, storeId, MediaTestFixtures.validPngBytes());
-        String second = upload(productId, storeId, MediaTestFixtures.validJpegBytes());
-        String third = upload(productId, storeId, MediaTestFixtures.validWebpBytes());
+        String first = upload(productId, storeId, MediaTestFixtures.validPngBytes(), "image/png");
+        String second = upload(productId, storeId, MediaTestFixtures.validJpegBytes(), "image/jpeg");
+        String third = upload(productId, storeId, MediaTestFixtures.validWebpBytes(), "image/webp");
 
         // 2) Outbox'in GERCEKTEN broker'a bastigini kanitla (yalnizca DB satirini degil).
         String uploadedMessage = awaitMessage(uploadedListener, 20_000);

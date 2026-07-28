@@ -7,7 +7,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -39,12 +38,7 @@ class MediaAuthorizationSystemTest extends AbstractMediaSystemTest {
         HttpHeaders headers = authHeaders(storeId, "STORE");
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new ByteArrayResource(MediaTestFixtures.validPngBytes()) {
-            @Override
-            public String getFilename() {
-                return "image";
-            }
-        });
+        body.add("file", MediaTestFixtures.filePart(MediaTestFixtures.validPngBytes(), "image/png", "image"));
 
         ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 "/api/v1/media/products/{productId}/images", HttpMethod.POST,
@@ -94,12 +88,7 @@ class MediaAuthorizationSystemTest extends AbstractMediaSystemTest {
         HttpHeaders headers = authHeaders(UUID.randomUUID(), "CUSTOMER");
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new ByteArrayResource(MediaTestFixtures.validPngBytes()) {
-            @Override
-            public String getFilename() {
-                return "image";
-            }
-        });
+        body.add("file", MediaTestFixtures.filePart(MediaTestFixtures.validPngBytes(), "image/png", "image"));
 
         ResponseEntity<String> response = restTemplate.exchange(
                 "/api/v1/media/products/{productId}/images", HttpMethod.POST,

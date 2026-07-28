@@ -5,6 +5,10 @@ import com.mediaservice.domain.model.MediaStatus;
 import com.sksamuel.scrimage.ImmutableImage;
 import com.sksamuel.scrimage.nio.JpegWriter;
 import com.sksamuel.scrimage.webp.WebpWriter;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -22,6 +26,27 @@ import javax.imageio.ImageIO;
 public final class MediaTestFixtures {
 
     private MediaTestFixtures() {
+    }
+
+    /**
+     * multipart/form-data icin "file" parcasini, part'in KENDI Content-Type'i ile kurar.
+     * <p>
+     * Bu ZORUNLUDUR: RestTemplate ciplak bir {@code ByteArrayResource} icin part'in
+     * content-type'ini dosya adindan cikaramazsa {@code application/octet-stream} yazar;
+     * sunucu tarafinda {@code MultipartFile.getContentType()} bunu dondurur ve
+     * WebpImageConverter.validateFormat kabul edilen listede bulamayip 415 firlatir.
+     * Yani gecerli bir PNG bile, yalnizca part basligi eksik oldugu icin reddedilir.
+     */
+    public static HttpEntity<ByteArrayResource> filePart(byte[] bytes, String contentType, String filename) {
+        HttpHeaders partHeaders = new HttpHeaders();
+        partHeaders.setContentType(MediaType.parseMediaType(contentType));
+        ByteArrayResource resource = new ByteArrayResource(bytes) {
+            @Override
+            public String getFilename() {
+                return filename;
+            }
+        };
+        return new HttpEntity<>(resource, partHeaders);
     }
 
     private static final int FIXTURE_WIDTH = 32;

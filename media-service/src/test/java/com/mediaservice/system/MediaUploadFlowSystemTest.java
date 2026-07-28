@@ -7,7 +7,6 @@ import org.junit.jupiter.api.condition.EnabledIf;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -45,12 +44,7 @@ class MediaUploadFlowSystemTest extends AbstractMediaSystemTest {
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
 
         MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
-        body.add("file", new ByteArrayResource(bytes) {
-            @Override
-            public String getFilename() {
-                return "image";
-            }
-        });
+        body.add("file", MediaTestFixtures.filePart(bytes, contentType, "image"));
 
         return restTemplate.exchange("/api/v1/media/products/{productId}/images", HttpMethod.POST,
                 new HttpEntity<>(body, headers), new ParameterizedTypeReference<>() {

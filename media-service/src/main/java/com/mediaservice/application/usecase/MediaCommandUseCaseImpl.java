@@ -160,6 +160,12 @@ public class MediaCommandUseCaseImpl implements MediaCommandUseCase {
         boolean wasPrimary = asset.isPrimary();
         asset.markDeleted();
         commandPort.save(asset);
+        if (wasPrimary) {
+            // Devirden ONCE yazdirilmali: uq_media_asset_primary ertelenemez bir kismi
+            // UNIQUE indekstir, iki UPDATE tek batch'te ters sirada giderse ihlal edilir
+            // (bkz. MediaCommandPort.flush).
+            commandPort.flush();
+        }
 
         List<MediaAsset> remaining = new ArrayList<>();
         for (MediaAsset candidate : locked) {
