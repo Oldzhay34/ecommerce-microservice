@@ -43,10 +43,25 @@ class OutboxPublisherSubsystemTest extends AbstractMediaSubsystemTest {
         storeId = UUID.randomUUID();
     }
 
+    /**
+     * Sunucu adli ama KALICI (auto-delete/exclusive OLMAYAN) test kuyrugu.
+     * <p>
+     * Argumansiz {@code channel.queueDeclare()} kuyrugu exclusive + auto-delete olarak
+     * acar. {@code RabbitTemplate.receive()} her cagrisinda bir consumer olusturup hemen
+     * iptal ettigi icin, mesaj HENUZ yayinlanmamisken yapilan ilk poll'den sonra
+     * auto-delete devreye girer ve kuyruk silinir; sonraki poll "NOT_FOUND - no queue"
+     * ile AmqpIOException firlatir. Outbox @Scheduled ile 2 saniyede bir bastigi icin
+     * ilk poll'un bos donmesi NORMAL akistir - dolayisiyla kuyruk consumer gelip
+     * gitmesine dayanikli olmalidir.
+     */
+    private static String declareDurableTestQueue(com.rabbitmq.client.Channel channel) throws java.io.IOException {
+        return channel.queueDeclare("", false, false, false, null).getQueue();
+    }
+
     @Test
     @DisplayName("S1: Yayinlanan MediaUploadedEvent gercekten media.exchange'e duser ve outbox satiri processed=true olur")
     void publishedEvent_ShouldReachMediaExchangeAndBeMarkedProcessed() {
-        String queueName = rabbitTemplate.execute(channel -> channel.queueDeclare().getQueue());
+        String queueName = rabbitTemplate.execute(channel -> declareDurableTestQueue(channel));
         rabbitTemplate.execute(channel -> {
             channel.queueBind(queueName, RabbitMqConfig.MEDIA_EXCHANGE, RabbitMqConfig.RK_MEDIA_UPLOADED);
             return null;
@@ -72,7 +87,7 @@ class OutboxPublisherSubsystemTest extends AbstractMediaSubsystemTest {
         var asset = commandUseCase.uploadProductImage(
                 productId, storeId, false, "image/png", MediaTestFixtures.validPngBytes());
 
-        String queueName = rabbitTemplate.execute(channel -> channel.queueDeclare().getQueue());
+        String queueName = rabbitTemplate.execute(channel -> declareDurableTestQueue(channel));
         rabbitTemplate.execute(channel -> {
             channel.queueBind(queueName, RabbitMqConfig.MEDIA_EXCHANGE, RabbitMqConfig.RK_MEDIA_DELETED);
             return null;
