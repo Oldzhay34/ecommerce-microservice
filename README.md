@@ -1,36 +1,36 @@
-# ShopBridge — E-Ticaret Mikroservis Platformu
+# ShopBridge — E-Commerce Microservice Platform
 
-Olay güdümlü (event-driven) bir e-ticaret platformu: 9 Spring Boot mikroservisi, mikro-frontend mimarisiyle kurulmuş 3 React arayüzü ve paylaşılan bir altyapı katmanı. Her servis kendi veritabanına sahiptir, servisler arası iletişim RabbitMQ üzerinden **Transactional Outbox** deseniyle yürür ve tüm dış trafik tek bir API Gateway'den geçer.
+An event-driven e-commerce platform: 9 Spring Boot microservices, 3 React frontends built on a micro-frontend architecture, and a shared infrastructure layer. Every service owns its database, inter-service communication runs over RabbitMQ using the **Transactional Outbox** pattern, and all external traffic passes through a single API Gateway.
 
 | | |
 |---|---|
 | **Backend** | Java 17/21, Spring Boot 3.3.x & 4.1.0, Spring Cloud Gateway |
 | **Frontend** | React 18, Vite, Module Federation, TanStack Query, Zustand |
-| **Veri** | PostgreSQL (servis başına bir instance), Redis, Elasticsearch, MinIO |
-| **Mesajlaşma** | RabbitMQ (topic exchange + DLQ), Transactional Outbox |
-| **Gözlemlenebilirlik** | Micrometer → Prometheus → Grafana |
-| **CI** | GitHub Actions (servis başına bağımsız pipeline), Testcontainers |
+| **Data** | PostgreSQL (one instance per service), Redis, Elasticsearch, MinIO |
+| **Messaging** | RabbitMQ (topic exchanges + DLQ), Transactional Outbox |
+| **Observability** | Micrometer → Prometheus → Grafana |
+| **CI** | GitHub Actions (independent pipeline per service), Testcontainers |
 
 ---
 
-## İçindekiler
+## Table of contents
 
-- [Mimari](#mimari)
-- [Servisler](#servisler)
-- [Mikro-frontend'ler](#mikro-frontendler)
-- [Olay akışı](#olay-akışı)
-- [Hızlı başlangıç](#hızlı-başlangıç)
-- [Yapılandırma](#yapılandırma)
-- [Gözlemlenebilirlik](#gözlemlenebilirlik)
-- [Test stratejisi](#test-stratejisi)
+- [Architecture](#architecture)
+- [Services](#services)
+- [Micro-frontends](#micro-frontends)
+- [Event flow](#event-flow)
+- [Quick start](#quick-start)
+- [Configuration](#configuration)
+- [Observability](#observability)
+- [Testing strategy](#testing-strategy)
 - [CI](#ci)
-- [Güvenlik](#güvenlik)
-- [Depo düzeni](#depo-düzeni)
-- [Sorun giderme](#sorun-giderme)
+- [Security](#security)
+- [Repository layout](#repository-layout)
+- [Troubleshooting](#troubleshooting)
 
 ---
 
-## Mimari
+## Architecture
 
 ```mermaid
 flowchart TB
@@ -42,7 +42,7 @@ flowchart TB
 
     GW["api-gateway :8080<br/>JWT · rate limit · routing"]
 
-    subgraph SVC["Mikroservisler"]
+    subgraph SVC["Microservices"]
         AUTH["auth-service :8085"]
         PROD["product-service :8082"]
         CART["cart-service :8083"]
@@ -53,9 +53,9 @@ flowchart TB
         NOT["notification-service"]
     end
 
-    MQ["RabbitMQ<br/>topic exchange + DLQ"]
+    MQ["RabbitMQ<br/>topic exchanges + DLQ"]
 
-    subgraph INFRA["Paylaşılan altyapı"]
+    subgraph INFRA["Shared infrastructure"]
         RD["Redis"]
         ES["Elasticsearch"]
         PROM["Prometheus :9090"]
@@ -77,37 +77,37 @@ flowchart TB
     GRAF --> PROM
 ```
 
-**Tasarım kararları**
+**Design decisions**
 
-- **Servis başına veritabanı.** Hiçbir servis başkasının tablosunu okumaz; tutarlılık olaylarla sağlanır.
-- **Transactional Outbox.** Servisler RabbitMQ'ya doğrudan yazmaz. Önce aynı transaction içinde `outbox_event` tablosuna yazılır, ayrı bir `@Scheduled` publisher `FOR UPDATE SKIP LOCKED` ile okuyup basar. Böylece "DB commit oldu ama mesaj gitmedi" durumu oluşmaz. Teslimat *at-least-once*'tır — tüketiciler idempotent olmak zorundadır.
-- **IDOR koruması.** Kaynak sahipliği (`storeId`, `userId`) istek gövdesinden değil, yalnızca JWT'den çıkarılır.
-- **Hexagonal mimari.** `media-service` bunu ArchUnit ile build-time zorunlu kılar (`HexagonalArchitectureTest`): domain katmanı infrastructure'a bağımlı olamaz, use case yalnızca port'ları görür.
-- **Veritabanı seviyesinde son savunma hattı.** Her serviste PL/pgSQL trigger'ları uygulama katmanını bypass eden yazmaları reddeder (bkz. [Güvenlik](#güvenlik)).
+- **Database per service.** No service reads another's tables; consistency is achieved through events.
+- **Transactional Outbox.** Services never publish to RabbitMQ directly. A row is written to `outbox_event` inside the same transaction, and a separate `@Scheduled` publisher reads it with `FOR UPDATE SKIP LOCKED` and dispatches it. This eliminates the "DB committed but the message was never sent" failure mode. Delivery is *at-least-once* — consumers must be idempotent.
+- **IDOR protection.** Resource ownership (`storeId`, `userId`) is never taken from the request body — it is derived exclusively from the JWT.
+- **Hexagonal architecture.** `media-service` enforces this at build time with ArchUnit (`HexagonalArchitectureTest`): the domain layer cannot depend on infrastructure, and use cases only see ports.
+- **Last line of defense at the database level.** Every service defines PL/pgSQL triggers that reject writes bypassing the application layer (see [Security](#security)).
 
 ---
 
-## Servisler
+## Services
 
-| Servis | Dizin | Host portu | Veritabanı | Boot / Java | Öne çıkan |
+| Service | Directory | Host port | Database | Boot / Java | Highlights |
 |---|---|---|---|---|---|
-| API Gateway | `api-gateway/` | `8080` | — | 3.3.5 / 21 | Spring Cloud Gateway, Redis rate limiter, JWT doğrulama |
-| Auth | `PromptEngineering/` | `8085` | `postgres_auth` `:5438` | 4.1.0 / 17 | Kayıt + OTP doğrulama + login, JWT üretimi |
-| Product | `product/` | `8082` | `postgres-product` `:5437` | 4.1.0 / 17 | Katalog, Elasticsearch arama, Redis cache |
-| Cart | `cart/` | `8083` | `postgres_cart` `:5436` | 4.1.0 / 17 | Sepet, Redis |
-| Order | `order/` | `8081` | `ecommerce-postgres-order` `:5435` | 4.1.0 / 17 | Sipariş yaşam döngüsü, stok rezervasyonu |
-| Payment | `payment/` | `8086` | `postgres-payment` `:5439` | 4.1.0 / 21 | Ödeme sağlayıcı entegrasyonu, iade |
-| Review | `review/` | `8087` | `postgres-review` `:5440` | 4.1.0 / 17 | Yorum, `order.shipped` ile yorum hakkı açma |
-| Media | `media-service/` | `8096` | `media-postgres` `:5445` | 3.3.5 / 21 | WebP dönüşümü (Scrimage), MinIO object storage, Flyway |
-| Notification | `notification-service/` | — | `postgres-notification` `:5433` | 3.3.4 / 21 | SMTP e-posta, OTP; yalnızca olay tüketir |
+| API Gateway | `api-gateway/` | `8080` | — | 3.3.5 / 21 | Spring Cloud Gateway, Redis rate limiter, JWT validation |
+| Auth | `PromptEngineering/` | `8085` | `postgres_auth` `:5438` | 4.1.0 / 17 | Register + OTP verification + login, JWT issuing |
+| Product | `product/` | `8082` | `postgres-product` `:5437` | 4.1.0 / 17 | Catalog, Elasticsearch search, Redis cache |
+| Cart | `cart/` | `8083` | `postgres_cart` `:5436` | 4.1.0 / 17 | Shopping cart, Redis |
+| Order | `order/` | `8081` | `ecommerce-postgres-order` `:5435` | 4.1.0 / 17 | Order lifecycle, stock reservation |
+| Payment | `payment/` | `8086` | `postgres-payment` `:5439` | 4.1.0 / 21 | Payment provider integration, refunds |
+| Review | `review/` | `8087` | `postgres-review` `:5440` | 4.1.0 / 17 | Reviews, unlocked by `order.shipped` |
+| Media | `media-service/` | `8096` | `media-postgres` `:5445` | 3.3.5 / 21 | WebP conversion (Scrimage), MinIO object storage, Flyway |
+| Notification | `notification-service/` | — | `postgres-notification` `:5433` | 3.3.4 / 21 | SMTP email, OTP; consumer only |
 
-> Tablodaki portlar **host** portlarıdır. Container içi portlar farklıdır (ör. `cart-service` container'da `8080`, host'ta `8083` dinler); servisler birbirine container adı ve container portu üzerinden erişir.
+> Ports in the table are **host** ports. Container-internal ports differ (e.g. `cart-service` listens on `8080` inside the container and `8083` on the host); services reach each other by container name and container port.
 
-### Gateway rotaları
+### Gateway routes
 
-Tüm dış trafik `http://localhost:8080` üzerinden geçer:
+All external traffic goes through `http://localhost:8080`:
 
-| Yol | Hedef | Rate limit (replenish/burst) |
+| Path | Target | Rate limit (replenish/burst) |
 |---|---|---|
 | `/api/v1/auth/**` | auth-service | — |
 | `/api/v1/products/search` | product-service | — |
@@ -118,17 +118,17 @@ Tüm dış trafik `http://localhost:8080` üzerinden geçer:
 | `/api/payments/**` | payment-service | 10 / 20 |
 | `/api/reviews/**` | review-service | 10 / 20 |
 
-Rate limit anahtarı `X-User-Id` başlığıdır; başlık yoksa istemci IP'sine düşer — böylece token gerektirmeyen public endpoint'ler de limitlenir. Media limitinin yüksek tutulmasının nedeni ürün detay ekranının token'sız galeri çağrıları yapmasıdır.
+The rate limit key is the `X-User-Id` header; when absent it falls back to the client IP, so endpoints that require no token are rate limited too. The media limit is higher because the product detail screen issues token-less gallery calls.
 
 ---
 
-## Mikro-frontend'ler
+## Micro-frontends
 
-Üç bağımsız uygulama, Vite Module Federation ile birleştirilir. `react`, `react-dom`, `@tanstack/react-query` ve `zustand` singleton olarak paylaşılır.
+Three independent applications composed via Vite Module Federation. `react`, `react-dom`, `@tanstack/react-query` and `zustand` are shared as singletons.
 
-**`shopbridge-dashboard-shell`** (`:3001`) — mağaza paneli:
+**`shopbridge-dashboard-shell`** (`:3001`) — store dashboard:
 
-| Remote | Port | Dizin |
+| Remote | Port | Directory |
 |---|---|---|
 | `mfe_orders` | `5001` | `shopbridge-mfe/` |
 | `mfe_cart` | `5002` | `shopbridge-mfe-cart/` |
@@ -141,35 +141,35 @@ Rate limit anahtarı `X-User-Id` başlığıdır; başlık yoksa istemci IP'sine
 | `mfe_product_create` | `6006` | `mfe-products-create/` |
 | `mfe_product_detail` | `6010` | `mfe-product-detail/` |
 
-**`admin-dashboard-shell`** (`:3002`) — yönetim paneli: `admin_mfe_orders` (`6101`), `admin_mfe_payments` (`6102`), `admin_mfe_reviews` (`6103`).
+**`admin-dashboard-shell`** (`:3002`) — admin dashboard: `admin_mfe_orders` (`6101`), `admin_mfe_payments` (`6102`), `admin_mfe_reviews` (`6103`).
 
-**`shopbridge-web`** — federation kullanmayan bağımsız storefront uygulaması.
+**`shopbridge-web`** — standalone storefront application, no federation.
 
-Ayrıca `mfe-media-gallery/` (`6008`) galeri bileşenini sunar.
+`mfe-media-gallery/` (`6008`) additionally exposes the gallery component.
 
-> `mfe_products` (`5005`) ile `mfe_products_store` (`6005`) aynı paketin farklı deployment'larıdır: ilki müşteri widget'ını, ikincisi `Store*` bileşenlerini expose eder. Bu yüzden ayrı remote anahtarlarıyla bağlanırlar.
+> `mfe_products` (`5005`) and `mfe_products_store` (`6005`) are two deployments of the same package: the first exposes the customer widget, the second exposes the `Store*` components. That is why they are wired under separate remote keys.
 
 ---
 
-## Olay akışı
+## Event flow
 
-Exchange'ler topic tipindedir ve tüketici kuyruklarının DLQ'su vardır.
+Exchanges are topic-typed and consumer queues have dead-letter queues.
 
-**Bağlı akışlar** — üreticisi ve tüketicisi olan olaylar:
+**Wired flows** — events that have both a producer and a consumer:
 
-| Exchange / routing key | Üretici | Tüketici | Etki |
+| Exchange / routing key | Producer | Consumer | Effect |
 |---|---|---|---|
-| `order.exchange` / `order.created` | order | cart → `cart.order.created.queue` | Sipariş oluşunca sepet temizlenir |
-| `order.exchange` / `order.created` | order | product → `product.stock.reservation.q` | Stok rezerve edilir |
-| *(stok yanıtı)* | product | order → `order.stock.response.queue` | Rezervasyon sonucu siparişe döner |
-| `order.exchange` / `order.approved` | order | payment → `order.approved.queue` | Ödeme başlatılır |
-| `order.exchange` / `order.shipped` | order | review → `review.order.shipped.queue` | Yorum hakkı açılır |
-| `ecommerce.topic` / `catalog.event.*` | product | product → `search.catalog.sync.q` | Elasticsearch katalog indeksi güncellenir |
-| *(OTP kuyruğu)* | auth | notification | OTP e-postası gönderilir |
+| `order.exchange` / `order.created` | order | cart → `cart.order.created.queue` | Cart is cleared once the order is placed |
+| `order.exchange` / `order.created` | order | product → `product.stock.reservation.q` | Stock is reserved |
+| *(stock response)* | product | order → `order.stock.response.queue` | Reservation result returns to the order |
+| `order.exchange` / `order.approved` | order | payment → `order.approved.queue` | Payment is initiated |
+| `order.exchange` / `order.shipped` | order | review → `review.order.shipped.queue` | Review eligibility is unlocked |
+| `ecommerce.topic` / `catalog.event.*` | product | product → `search.catalog.sync.q` | Elasticsearch catalog index is updated |
+| *(OTP queue)* | auth | notification | OTP email is sent |
 
-**Yayınlanan ancak henüz tüketilmeyen olaylar** — üretici tarafı hazır, tüketici tarafı ileriye dönük:
+**Published but not yet consumed** — the producer side is ready, the consumer side is future work:
 
-| Exchange | Routing key | Üretici |
+| Exchange | Routing key | Producer |
 |---|---|---|
 | `payment.exchange` | `payment.completed` · `payment.failed` · `payment.refunded` | payment |
 | `media.exchange` | `media.uploaded` · `media.updated` · `media.deleted` | media |
@@ -177,50 +177,50 @@ Exchange'ler topic tipindedir ve tüketici kuyruklarının DLQ'su vardır.
 | `cart.exchange` | `cart.cartupdatedevent` · `cart.cartclearedevent` | cart |
 | `order.exchange` | `order.cancelled` | order |
 
-> **`product.deleted` özel bir durumdur.** `media-service` bu olayı dinler ve ürün silindiğinde o ürünün tüm görsellerini kaskad soft-delete eder — ancak `product-service` şu an `product.exchange` üzerine **hiçbir şey yayınlamamaktadır**. Dinleyici pasif durur: kuyruk oluşur, mesaj gelmez, zararsızdır. Sözleşme yine de test edilir — `ProductDeletedListenerSubsystemTest`, product-service'in yerine geçerek gerçek bir RabbitMQ broker'ına ham AMQP istemcisiyle mesaj basar. Product tarafı bu olayı yayınlamaya başladığında entegrasyon kendiliğinden çalışır.
+> **`product.deleted` is a special case.** `media-service` listens for this event and cascade soft-deletes all images of a deleted product — but `product-service` currently publishes **nothing** on `product.exchange`. The listener stays passive: the queue is created, no message arrives, and it is harmless. The contract is still tested — `ProductDeletedListenerSubsystemTest` stands in for product-service and publishes to a real RabbitMQ broker with a raw AMQP client. The integration will work as soon as the product side starts publishing.
 
-Tüm yayınlar outbox üzerinden yapılır: mesaj gövdesi `outbox_event.payload` içinde ham JSON string olarak saklanır ve `content-type: application/json` ile, converter'dan geçirilmeden basılır — bu, JSON'ın ikinci kez sarmalanmasını (double encoding) önler.
+All publishing goes through the outbox: the message body is stored as a raw JSON string in `outbox_event.payload` and dispatched with `content-type: application/json` without passing through a message converter — this prevents the JSON from being wrapped a second time (double encoding).
 
 ---
 
-## Hızlı başlangıç
+## Quick start
 
-### Ön koşullar
+### Prerequisites
 
-- Docker Engine 24+ ve Docker Compose v2
-- JDK 21 (tüm servisleri kaynaktan derlemek için; 17 hedefleyen servisler de 21 ile derlenir)
-- Node.js 20+ (frontend geliştirmesi için)
+- Docker Engine 24+ and Docker Compose v2
+- JDK 21 (to build every service from source; the ones targeting 17 also compile under 21)
+- Node.js 20+ (for frontend development)
 
-### 1. Paylaşılan ağı oluştur
+### 1. Create the shared network
 
-Tüm compose dosyaları `ecommerce-shared-network` ağını **external** olarak tanımlar; Docker bunu kendisi oluşturmaz:
+Every compose file declares `ecommerce-shared-network` as **external**; Docker will not create it for you:
 
 ```bash
 docker network create ecommerce-shared-network
 ```
 
-### 2. Altyapıyı ayağa kaldır
+### 2. Bring up the infrastructure
 
-Diğer her şey buna bağımlıdır, **önce bu çalışmalıdır**:
+Everything else depends on it, so this **must run first**:
 
 ```bash
 cd ecommerce-infra && docker compose up -d --wait
 ```
 
-Bu adım RabbitMQ, Elasticsearch, Redis, Prometheus ve Grafana'yı başlatır. `--wait`, her servisin healthcheck'i `healthy` olana kadar bekler.
+This starts RabbitMQ, Elasticsearch, Redis, Prometheus and Grafana. `--wait` blocks until every service reports a `healthy` healthcheck.
 
-`ecommerce-infra/.env` dosyası gereklidir ve depoda **yoktur** (`.gitignore`'da):
+`ecommerce-infra/.env` is required and is **not** in the repository (it is gitignored):
 
 ```bash
 RABBITMQ_USER=admin
-RABBITMQ_PASSWORD=<parola>
+RABBITMQ_PASSWORD=<password>
 GRAFANA_ADMIN_USER=admin
-GRAFANA_ADMIN_PASSWORD=<parola>
+GRAFANA_ADMIN_PASSWORD=<password>
 ```
 
-### 3. Servisleri başlat
+### 3. Start the services
 
-Her servis kendi compose dosyasını ve veritabanını taşır. Bağımlılık sırası: **auth → product → cart → order → payment → review → media → notification → gateway**.
+Each service carries its own compose file and database. Dependency order: **auth → product → cart → order → payment → review → media → notification → gateway**.
 
 ```bash
 docker compose -f PromptEngineering/compose.yml     up -d --build
@@ -234,15 +234,15 @@ docker compose -f notification-service/compose.yaml up -d --build
 docker compose -f api-gateway/docker-compose.yml    up -d --build
 ```
 
-### 4. Doğrula
+### 4. Verify
 
 ```bash
 curl -fsS http://localhost:8080/actuator/health
 ```
 
-### 5. Frontend'i çalıştır
+### 5. Run the frontend
 
-Shell, remote'lar ayakta olmadan boş render eder — önce remote'ları başlatın:
+The shell renders empty unless its remotes are up, so start the remotes first:
 
 ```bash
 cd shopbridge-mfe-products && npm ci && npm run build && npm run preview
@@ -252,78 +252,78 @@ cd shopbridge-mfe-products && npm ci && npm run build && npm run preview
 cd shopbridge-dashboard-shell && npm ci && npm run dev
 ```
 
-> Module Federation remote'ları `remoteEntry.js` üzerinden yüklenir; bu dosya yalnızca **build** çıktısında bulunur. Remote'ları `npm run dev` ile değil, `npm run build && npm run preview` ile çalıştırın.
+> Module Federation remotes are loaded through `remoteEntry.js`, and that file only exists in the **build** output. Run remotes with `npm run build && npm run preview`, not `npm run dev`.
 
-### Tek bir servisi yerelde derlemek
+### Building a single service locally
 
 ```bash
 cd media-service && ./mvnw clean verify
 ```
 
-Testcontainers kullanan katmanlar Docker gerektirir; Docker yoksa `@EnabledIf` ile sessizce atlanır.
+Layers that use Testcontainers require Docker; without it they are silently skipped via `@EnabledIf`.
 
 ---
 
-## Yapılandırma
+## Configuration
 
-Tüm ayarlar ortam değişkeniyle geçersiz kılınabilir; parantez içindekiler varsayılanlardır.
+Everything can be overridden with environment variables; defaults are shown below.
 
-| Değişken | Kullanan | Varsayılan |
+| Variable | Used by | Default |
 |---|---|---|
-| `JWT_SECRET` | tüm servisler | ortak geliştirme anahtarı |
-| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | tüm veri servisleri | `localhost:5432` |
-| `RABBITMQ_HOST` / `RABBITMQ_PORT` / `RABBITMQ_USER` / `RABBITMQ_PASSWORD` | mesajlaşan servisler | `localhost:5672`, `guest` |
+| `JWT_SECRET` | all services | shared development key |
+| `DB_HOST` / `DB_PORT` / `DB_NAME` / `DB_USER` / `DB_PASSWORD` | all data services | `localhost:5432` |
+| `RABBITMQ_HOST` / `RABBITMQ_PORT` / `RABBITMQ_USER` / `RABBITMQ_PASSWORD` | messaging services | `localhost:5672`, `guest` |
 | `REDIS_HOST` / `REDIS_PORT` / `REDIS_DATABASE` | gateway, product, cart, media | `localhost:6379` |
-| `SMTP_USER` / `SMTP_PASSWORD` | notification | — (zorunlu) |
+| `SMTP_USER` / `SMTP_PASSWORD` | notification | — (required) |
 | `MINIO_*` | media | `minioadmin` |
 
-> **`JWT_SECRET` tüm servislerde aynı olmalıdır.** Hizasızsa korumalı endpoint'ler sessizce `403` döner — token doğrulanamaz ama hata da üretilmez. Üretimde varsayılan değeri mutlaka değiştirin.
+> **`JWT_SECRET` must be identical across all services.** If it drifts, protected endpoints silently return `403` — the token cannot be validated, but no error is surfaced either. Always replace the default in production.
 
-Redis veritabanı numaraları izole edilmiştir: gateway rate limiter `5`, media cache `6`.
+Redis database numbers are isolated: `5` for the gateway rate limiter, `6` for the media cache.
 
 ---
 
-## Gözlemlenebilirlik
+## Observability
 
-Her servis `/actuator/prometheus` üzerinden metrik sunar; `application` etiketi servis adıyla doldurulur ve `http.server.requests` için percentile histogram açıktır (Grafana'daki `histogram_quantile()` sorguları buna bağlıdır).
+Every service exposes metrics at `/actuator/prometheus`, tagged with `application` set to the service name, with percentile histograms enabled for `http.server.requests` (the `histogram_quantile()` queries in Grafana depend on this).
 
-| Arayüz | Adres |
+| Interface | Address |
 |---|---|
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3300 |
 | RabbitMQ Management | http://localhost:15672 |
 | MinIO Console | http://localhost:9001 |
 
-Grafana, datasource ve dashboard'ları provisioning ile otomatik kurar — `ShopBridge` klasöründeki **ShopBridge — Servis Genel Bakış** panosu istek oranı, p95 gecikme, 5xx oranı, JVM heap, HikariCP bağlantıları ve RabbitMQ kuyruk derinliğini gösterir.
+Grafana provisions its datasource and dashboards automatically — the **ShopBridge — Service Overview** dashboard in the `ShopBridge` folder shows request rate, p95 latency, 5xx rate, JVM heap, HikariCP connections and RabbitMQ queue depth.
 
-RabbitMQ metrikleri `rabbitmq_prometheus` plugin'i üzerinden `:15692` portundan toplanır.
+RabbitMQ metrics are scraped from port `:15692` via the `rabbitmq_prometheus` plugin.
 
-Scrape hedefleri `ecommerce-infra/prometheus/prometheus.yml` içinde tanımlıdır. Bir servisin container adı veya portu değişirse bu dosya da güncellenmelidir — infra CI, dosyadaki her job'ın çalışan Prometheus'a gerçekten yüklendiğini doğrular.
+Scrape targets are defined in `ecommerce-infra/prometheus/prometheus.yml`. If a service's container name or port changes, that file must be updated too — the infra CI verifies that every job in the file is actually loaded by the running Prometheus.
 
 ---
 
-## Test stratejisi
+## Testing strategy
 
-Testler, gerçek bağımlılık kullanım derecesine göre katmanlanmıştır. Katman adı paket adıdır, böylece hem çalıştırma hem de raporlama seçilebilir olur:
+Tests are layered by how much real infrastructure they exercise. The layer name is the package name, which makes both execution and reporting selectable:
 
-| Katman | Ne kullanır | Docker |
+| Layer | What it uses | Docker |
 |---|---|---|
-| `unit` | Saf Mockito, altyapı yok | hayır |
-| `integration` | `@WebMvcTest` + gerçek Spring Security filtre zinciri | hayır |
-| `module` | ArchUnit — hexagonal mimari ve SOLID sınır kuralları | hayır |
-| `subsystem` | Testcontainers (Postgres, RabbitMQ, Redis, MinIO); beyaz kutu, bean'ler inject edilir | **evet** |
-| `system` | Tam stack, kara kutu — yalnızca public HTTP API | **evet** |
-| `alpha` | Tam stack, uçtan uca tek yolculuk senaryosu | **evet** |
+| `unit` | Pure Mockito, no infrastructure | no |
+| `integration` | `@WebMvcTest` + the real Spring Security filter chain | no |
+| `module` | ArchUnit — hexagonal architecture and SOLID boundary rules | no |
+| `subsystem` | Testcontainers (Postgres, RabbitMQ, Redis, MinIO); white box, beans are injected | **yes** |
+| `system` | Full stack, black box — public HTTP API only | **yes** |
+| `alpha` | Full stack, a single end-to-end journey scenario | **yes** |
 
-En kapsamlı örnek `media-service`'tir (6 katmanın tamamı, 157 test). `subsystem` katmanı cross-service sözleşmeleri de doğrular: örneğin `product.deleted` olayı, gerçek bir RabbitMQ broker'ına bağımsız bir AMQP istemcisiyle basılarak product-service'in sözleşmesi simüle edilir.
+The most complete example is `media-service` (all six layers, 157 tests). The `subsystem` layer also verifies cross-service contracts: the `product.deleted` event, for instance, is published to a real RabbitMQ broker by an independent AMQP client that simulates product-service's contract.
 
-Docker gerektiren testler `@EnabledIf("...DockerAvailability#isDockerAvailable")` ile korunur. CI bunun "yeşil ama hiçbir şey koşmamış" duruma dönüşmesini engeller: `media-ci.yml`, surefire raporlarında bu katmanların gerçekten çalıştığını (`skipped=0`, `tests>0`) ayrıca doğrular.
+Docker-dependent tests are guarded by `@EnabledIf("...DockerAvailability#isDockerAvailable")`. CI prevents this from degrading into "green but nothing ran": `media-ci.yml` additionally asserts from the surefire reports that those layers really executed (`skipped=0`, `tests>0`).
 
 ---
 
 ## CI
 
-Her servisin bağımsız bir GitHub Actions pipeline'ı vardır ve yalnızca kendi dizini değiştiğinde tetiklenir:
+Each service has an independent GitHub Actions pipeline, triggered only when its own directory changes:
 
 ```
 .github/workflows/
@@ -334,42 +334,42 @@ Her servisin bağımsız bir GitHub Actions pipeline'ı vardır ve yalnızca ken
 ├── media-ci.yml               └── notification-service-ci.yml
 ```
 
-Java pipeline'ları: JDK kurulumu (Maven cache) → `mvn -B clean verify` → surefire raporları ve jar artifact olarak yüklenir.
+Java pipelines: set up JDK (with Maven cache) → `mvn -B clean verify` → upload surefire reports and the jar as artifacts.
 
-`ecommerce-infra-ci.yml` farklıdır — Java kodu yoktur, bunun yerine altyapının gerçekten sağlıklı ayağa kalktığını doğrular:
+`ecommerce-infra-ci.yml` is different — there is no Java code, so it verifies that the infrastructure actually comes up healthy:
 
-1. `docker compose config` ile sözdizimi
-2. Compose lint — her servisin healthcheck'i olmalı, hiçbir imaj kayan `:latest` etiketi kullanmamalı
-3. `promtool check config` ile `prometheus.yml`, ayrıca Grafana provisioning YAML/JSON doğrulaması
-4. `up -d --wait` ile tüm stack healthy olana kadar bekleme
-5. Smoke testler: RabbitMQ ping + management API, Elasticsearch cluster durumu, Redis set/get, Prometheus'ta her job'ın yüklenmesi ve `rabbitmq`/`prometheus` hedeflerinin gerçekten `up` olması, Grafana'da datasource + dashboard provisioning'inin uygulanması ve Prometheus'a proxy sorgusu
+1. Syntax via `docker compose config`
+2. Compose lint — every service must define a healthcheck, and no image may use a drifting `:latest` tag
+3. `prometheus.yml` via `promtool check config`, plus Grafana provisioning YAML/JSON validation
+4. `up -d --wait` until the whole stack is healthy
+5. Smoke tests: RabbitMQ ping + management API, Elasticsearch cluster status, Redis set/get, every Prometheus job being loaded and the `rabbitmq`/`prometheus` targets actually reporting `up`, Grafana datasource + dashboard provisioning being applied, and a proxied query to Prometheus
 
-Statik analiz için JetBrains Qodana yapılandırması `qodana.yaml` içindedir.
-
----
-
-## Güvenlik
-
-**Kimlik doğrulama.** Auth service kayıt → OTP doğrulama → login akışını yürütür ve JWT üretir. Gateway'deki `JwtAuthenticationGlobalFilter` token'ı doğrular, `X-User-Id` ve `X-User-Role` başlıklarını aşağı akışa geçirir ve **istemcinin gönderdiği sahte `X-User-Id`/`X-User-Role` başlıklarını ezer** — bu başlıklara yalnızca gateway'in arkasında güvenilebilir. Roller: `ROLE_CUSTOMER`, `ROLE_STORE`, `ROLE_ADMIN`.
-
-**Yetkilendirme.** Endpoint seviyesinde `@PreAuthorize`, kaynak seviyesinde sahiplik kontrolü. Sahiplik bilgisi istekten değil yalnızca JWT'den okunur — başka bir mağazanın kaynağına erişim `403` alır.
-
-**Veritabanı trigger'ları.** Her servis, uygulama katmanını bypass eden çağırıcılara (kompromize servis, bug, doğrudan DB erişimi) karşı son savunma hattı olarak PL/pgSQL trigger'ları tanımlar. Bunlar SQL injection filtresi **değildir** (sorgular zaten parametre binding kullanır); masum bir kullanıcının asla ihtiyaç duymayacağı işlemleri engellerler:
-
-- `media_asset` üzerinde fiziksel `DELETE` tamamen yasak — soft delete sözleşmesi DB seviyesinde zorunlu
-- `outbox_event.payload` geçerli JSON olmak zorunda
-- Yayınlanmış (`processed=true`) outbox satırlarının gövdesi değiştirilemez
-- Boyut/tutar alanlarında aralık ve tip değişmezleri, kimlik ve finansal alanlarda değişmezlik, geçersiz durum geçişleri
-
-`media-service` bunları Flyway migration'ı (`V2__security_triggers.sql`) olarak taşır ve `SecurityTriggersSubsystemTest` ile gerçek Postgres üzerinde, uygulama katmanı kasıtlı olarak bypass edilerek doğrular. Diğer servislerde `db/security-triggers.sql` olarak `spring.sql.init` ile uygulanır.
-
-**Rate limiting.** Gateway'de Redis tabanlı token bucket (bkz. [Gateway rotaları](#gateway-rotaları)).
-
-**Yükleme güvenliği.** Media service dosya türünü hem beyan edilen `Content-Type` hem de magic byte ile doğrular; ikisi uyuşmazsa reddeder. Kabul edilen her görsel WebP'ye dönüştürülür.
+JetBrains Qodana static analysis is configured in `qodana.yaml`.
 
 ---
 
-## Depo düzeni
+## Security
+
+**Authentication.** The auth service handles register → OTP verification → login and issues JWTs. The gateway's `JwtAuthenticationGlobalFilter` validates the token, propagates `X-User-Id` and `X-User-Role` downstream, and **overwrites any spoofed `X-User-Id`/`X-User-Role` headers sent by the client** — these headers are only trustworthy behind the gateway. Roles: `ROLE_CUSTOMER`, `ROLE_STORE`, `ROLE_ADMIN`.
+
+**Authorization.** `@PreAuthorize` at the endpoint level, ownership checks at the resource level. Ownership is read exclusively from the JWT, never from the request — accessing another store's resource yields `403`.
+
+**Database triggers.** Every service defines PL/pgSQL triggers as a last line of defense against callers that bypass the application layer (a compromised service, a bug, direct DB access). These are **not** a SQL injection filter (queries already use parameter binding); they block operations an innocent user would never need:
+
+- Physical `DELETE` on `media_asset` is forbidden outright — the soft-delete contract is enforced at the DB level
+- `outbox_event.payload` must be valid JSON
+- The body of a published (`processed=true`) outbox row cannot be modified
+- Range and type invariants on size/amount fields, immutability of identity and financial fields, and rejection of invalid state transitions
+
+`media-service` ships these as a Flyway migration (`V2__security_triggers.sql`) and verifies them in `SecurityTriggersSubsystemTest` against a real Postgres, deliberately bypassing the application layer. Other services apply them as `db/security-triggers.sql` through `spring.sql.init`.
+
+**Rate limiting.** Redis-backed token bucket at the gateway (see [Gateway routes](#gateway-routes)).
+
+**Upload safety.** The media service validates file type against both the declared `Content-Type` and the file's magic bytes, rejecting any mismatch. Every accepted image is converted to WebP.
+
+---
+
+## Repository layout
 
 ```
 ecommerce-monorepo/
@@ -377,34 +377,34 @@ ecommerce-monorepo/
 ├── PromptEngineering/        auth-service
 ├── product/  cart/  order/  payment/  review/
 ├── media-service/            WebP + MinIO
-├── notification-service/     SMTP, yalnızca tüketici
+├── notification-service/     SMTP, consumer only
 ├── ecommerce-infra/          RabbitMQ · Elasticsearch · Redis · Prometheus · Grafana
 │   ├── compose.yml
 │   ├── prometheus/prometheus.yml
 │   ├── grafana/provisioning/
 │   └── rabbitmq/enabled_plugins
-├── shopbridge-web/                  storefront (federation yok)
-├── shopbridge-dashboard-shell/      mağaza paneli shell'i
-├── admin-dashboard-shell/           yönetim paneli shell'i
-├── shopbridge-mfe*/  mfe-*/  admin-mfe-*/    federation remote'ları
-├── .github/workflows/        servis başına CI
+├── shopbridge-web/                  storefront (no federation)
+├── shopbridge-dashboard-shell/      store dashboard shell
+├── admin-dashboard-shell/           admin dashboard shell
+├── shopbridge-mfe*/  mfe-*/  admin-mfe-*/    federation remotes
+├── .github/workflows/        CI per service
 └── qodana.yaml
 ```
 
-Her Java servisi kendi içinde katmanlıdır: `api` (controller + DTO) · `application` (use case + port) · `domain` (model + iş kuralları) · `infrastructure` (adapter: persistence, messaging, security, storage).
+Each Java service is internally layered: `api` (controllers + DTOs) · `application` (use cases + ports) · `domain` (model + business rules) · `infrastructure` (adapters: persistence, messaging, security, storage).
 
 ---
 
-## Sorun giderme
+## Troubleshooting
 
-**`network ecommerce-shared-network not found`** — Paylaşılan ağ external tanımlıdır. `docker network create ecommerce-shared-network` çalıştırın.
+**`network ecommerce-shared-network not found`** — The shared network is declared external. Run `docker network create ecommerce-shared-network`.
 
-**Korumalı endpoint'ler sessizce `403` dönüyor** — `JWT_SECRET` servisler arasında hizasız. Tüm servislerde aynı değeri kullanın.
+**Protected endpoints silently return `403`** — `JWT_SECRET` has drifted between services. Use the same value everywhere.
 
-**Frontend boş render ediyor, konsolda `remoteEntry.js` 404** — Remote'lar `npm run dev` ile çalıştırılmış. `remoteEntry.js` yalnızca build çıktısında üretilir; `npm run build && npm run preview` kullanın.
+**Frontend renders empty, console shows `remoteEntry.js` 404** — The remotes were started with `npm run dev`. `remoteEntry.js` is only produced in the build output; use `npm run build && npm run preview`.
 
-**Elasticsearch `--wait` sırasında zaman aşımına uğruyor** — `start_period` 60 saniyedir ve ilk açılış yavaştır. `docker compose logs elasticsearch` ile bellek limitini kontrol edin (`ES_JAVA_OPTS=-Xms1g -Xmx1g`).
+**Elasticsearch times out during `--wait`** — `start_period` is 60 seconds and the first boot is slow. Check the memory limit with `docker compose logs elasticsearch` (`ES_JAVA_OPTS=-Xms1g -Xmx1g`).
 
-**Testcontainers "Could not find a valid Docker environment"** — Docker Desktop'ın yeni sürümlerinde `npipe` üzerinden API sürüm uyuşmazlığı olabilir. Docker çalışıyorsa `DOCKER_HOST` ayarını veya Testcontainers sürümünü kontrol edin.
+**Testcontainers reports "Could not find a valid Docker environment"** — Recent Docker Desktop versions can hit an API version mismatch over `npipe`. If Docker is running, check your `DOCKER_HOST` setting or the Testcontainers version.
 
-**Prometheus'ta hedefler `DOWN`** — `prometheus.yml` hedefleri container adı ve **container içi** port kullanır, host portu değil. Servis `ecommerce-shared-network` üzerinde mi kontrol edin.
+**Prometheus targets are `DOWN`** — Targets in `prometheus.yml` use container names and **container-internal** ports, not host ports. Verify the service is attached to `ecommerce-shared-network`.
