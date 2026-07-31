@@ -35,12 +35,12 @@ An event-driven e-commerce platform: 9 Spring Boot microservices, 3 React fronte
 ```mermaid
 flowchart TB
     subgraph FE["Frontend"]
-        SW["shopbridge-web<br/>(storefront)"]
-        SDS["shopbridge-dashboard-shell<br/>:3001"]
-        ADS["admin-dashboard-shell<br/>:3002"]
+        SW["shopbridge-web (storefront)"]
+        SDS["shopbridge-dashboard-shell :3001"]
+        ADS["admin-dashboard-shell :3002"]
     end
 
-    GW["api-gateway :8080<br/>JWT · rate limit · routing"]
+    GW["api-gateway :8080 - JWT, rate limit, routing"]
 
     subgraph SVC["Microservices"]
         AUTH["auth-service :8085"]
@@ -53,7 +53,7 @@ flowchart TB
         NOT["notification-service"]
     end
 
-    MQ["RabbitMQ<br/>topic exchanges + DLQ"]
+    MQ["RabbitMQ - topic exchanges + DLQ"]
 
     subgraph INFRA["Shared infrastructure"]
         RD["Redis"]
@@ -65,15 +65,49 @@ flowchart TB
     SW --> GW
     SDS --> GW
     ADS --> GW
-    GW --> AUTH & PROD & CART & ORD & PAY & REV & MED
 
-    AUTH & PROD & CART & ORD & PAY & REV & MED -.outbox.-> MQ
+    GW --> AUTH
+    GW --> PROD
+    GW --> CART
+    GW --> ORD
+    GW --> PAY
+    GW --> REV
+    GW --> MED
+
+    AUTH -.outbox.-> MQ
+    PROD -.outbox.-> MQ
+    CART -.outbox.-> MQ
+    ORD -.outbox.-> MQ
+    PAY -.outbox.-> MQ
+    REV -.outbox.-> MQ
+    MED -.outbox.-> MQ
+
     MQ -.-> NOT
-    MQ -.-> PROD & CART & ORD & REV & MED
+    MQ -.-> PROD
+    MQ -.-> CART
+    MQ -.-> ORD
+    MQ -.-> REV
+    MQ -.-> MED
 
-    GW & PROD & CART & MED --> RD
-    PROD & ORD & PAY & REV --> ES
-    PROM -->|scrape| GW & SVC
+    GW --> RD
+    PROD --> RD
+    CART --> RD
+    MED --> RD
+
+    PROD --> ES
+    ORD --> ES
+    PAY --> ES
+    REV --> ES
+
+    PROM -->|scrape| GW
+    PROM -->|scrape| AUTH
+    PROM -->|scrape| PROD
+    PROM -->|scrape| CART
+    PROM -->|scrape| ORD
+    PROM -->|scrape| PAY
+    PROM -->|scrape| REV
+    PROM -->|scrape| MED
+    PROM -->|scrape| NOT
     GRAF --> PROM
 ```
 
